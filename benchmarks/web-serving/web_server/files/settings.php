@@ -14,9 +14,11 @@
  * @subpackage Configuration
  */
 
+date_default_timezone_set('UTC');
+
 global $CONFIG;
 if (!isset($CONFIG)) {
-	$CONFIG = new stdClass;
+	$CONFIG = new \stdClass;
 }
 
 /*
@@ -57,7 +59,6 @@ $CONFIG->dbname = 'ELGG_DB';
  *
  * @global string $CONFIG->dbhost
  */
-//$CONFIG->dbhost = '10.22.17.31';
 $CONFIG->dbhost = 'mysql_server';
 
 /**
@@ -103,17 +104,21 @@ $CONFIG->dbprefix = 'elgg_';
  * 	1) One or more memcache servers (http://www.danga.com/memcached/)
  *  2) PHP memcache wrapper (http://php.net/manual/en/memcache.setup.php)
  *
+ * You can set a namespace prefix if you run multiple Elgg instances
+ * on the same Memcache server.
+ *
  * Note: Multiple server support is only available on server 1.2.1
  * or higher with PECL library > 2.0.0
  */
+
 $CONFIG->memcache = true;
-//
+
 $CONFIG->memcache_servers = array (
-//	array('server1', 11211),
-//	array('10.22.17.71', 11211)
     array('memcache_server', 11211)
 );
 
+// namespace prefix
+// $CONFIG->memcache_namespace_prefix = '';
 
 /**
  * Better caching performance
@@ -127,21 +132,59 @@ $CONFIG->memcache_servers = array (
 //$CONFIG->dataroot = "";
 //$CONFIG->simplecache_enabled = true;
 
+/**
+ * Enable the boot cache
+ *
+ * Elgg can store most non-user-specific boot up data in a cache. If you want to
+ * enable this, uncomment the next line to set it to 10. Although Elgg has a built-
+ * in invalidation strategy for this cache, you should consider a small TTL to
+ * minimize the damage if the cache should grow stale.
+ */
+//$CONFIG->boot_cache_ttl = 10;
+
+/**
+ * Set cache directory
+ *
+ * By default, Elgg uses the data directory to store cache files, but this may
+ * be undesirable for sites with the data directory on a distributed file system
+ * (e.g. multiple servers with load balancing). You can specify a separate location
+ * for the cache files here.
+ */
+//$CONFIG->cacheroot = "";
+
+/**
+ * Enable SendFile file serving
+ *
+ * After enabling X-Sendfile/X-Accel on your server, you can enable its support in Elgg. Set the
+ * X-Sendfile-Type value to "X-Sendfile" (Apache) or "X-Accel-Redirect" (Nginx).
+ *
+ * @global string $CONFIG->{'X-Sendfile-Type'}
+ */
+//$CONFIG->{'X-Sendfile-Type'} = '';
+
+/**
+ * Configure X-Accel on nginx (see SendFile above)
+ *
+ * For Nginx, you'll likely also need to set this to a mapping like: "/path/to/dataroot/=/download/".
+ *
+ * @global string $CONFIG->{'X-Accel-Mapping'}
+ */
+//$CONFIG->{'X-Accel-Mapping'} = '';
 
 /**
  * Cookie configuration
  *
- * Elgg uses 2 cookies: a PHP session cookie and an extended login cookie 
+ * Elgg uses 2 cookies: a PHP session cookie and an extended login cookie
  * (also called the remember me cookie). See the PHP manual for documentation on
  * each of these parameters. Possible options:
- * 
+ *
  *  - Set the session name to share the session across applications.
  *  - Set the path because Elgg is not installed in the root of the web directory.
  *  - Set the secure option to true if you only serve the site over HTTPS.
  *  - Set the expire option on the remember me cookie to change its lifetime
  *
  * To use, uncomment the appropriate sections below and update for your site.
- * 
+ *
  * @global array $CONFIG->cookies
  */
 // get the default parameters from php.ini
@@ -187,6 +230,19 @@ $CONFIG->broken_mta = false;
 $CONFIG->db_disable_query_cache = false;
 
 /**
+ * Automatically disable plugins that are unable to boot
+ *
+ * Elgg will disable unbootable plugins. If you set this to false plugins
+ * will no longer be disabled if they are not bootable. This could cause requests
+ * to your site to fail as required views, classes or cached data could be missing.
+ *
+ * Setting this to false could be useful during deployment of new code.
+ *
+ * @global bool $CONFIG->auto_disable_plugins
+ */
+$CONFIG->auto_disable_plugins = true;
+
+/**
  * Minimum password length
  *
  * This value is used when validating a user's password during registration.
@@ -198,16 +254,33 @@ $CONFIG->min_password_length = 6;
 /**
  * This is an optional script used to override Elgg's default handling of
  * uncaught exceptions.
- * 
+ *
  * This should be an absolute file path to a php script that will be called
  * any time an uncaught exception is thrown.
- * 
+ *
  * The script will have access to the following variables as part of the scope
  * global $CONFIG
  * $exception - the unhandled exception
- * 
+ *
  * @warning - the database may not be available
- * 
+ *
  * @global string $CONFIG->exception_include
  */
 $CONFIG->exception_include = '';
+
+/**
+ * To enable profiling, uncomment the following lines, and replace __some_secret__ with a
+ * secret key. When enabled, profiling data will show in the JS console.
+ */
+//if (isset($_REQUEST['__some_secret__'])) {
+//
+//	// send profiling data to the JS console?
+//	$CONFIG->enable_profiling = true;
+//
+//	// profile all queries? A page with a ton of queries could eat up memory.
+//	$CONFIG->profiling_sql = false;
+//
+//	// in the list, don't include times that don't contribute at least this much to the
+//	// total time captured. .1% by default
+//	$CONFIG->profiling_minimum_percentage = .1;
+//}
