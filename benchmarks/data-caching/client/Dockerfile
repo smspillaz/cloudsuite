@@ -6,7 +6,8 @@ RUN groupadd -r memcache && useradd -r -g memcache memcache
 
 ENV DEBIAN_FRONTEND noninteractive
 
-COPY memcached.tar.gz /memcached.tar.gz
+RUN mkdir -p /usr/src
+COPY memcached /usr/src/memcached
 
 RUN apt-get update && apt-get install -y libevent-2.0-5 vim valgrind gdb telnet --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
@@ -15,9 +16,6 @@ RUN buildDeps='curl gcc libc6-dev libevent-dev make' \
 	&& set -x \
 	&& apt-get update && apt-get install -y $buildDeps --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& mkdir -p /usr/src/memcached \
-	&& tar -xzf memcached.tar.gz -C /usr/src/memcached --strip-components=1 \
-	&& rm memcached.tar.gz \
 	&& cd /usr/src/memcached/memcached_client \
 	&& make CFLAGS="-g -O3" \
 	&& chown -R memcache:memcache /usr/src/memcached \
