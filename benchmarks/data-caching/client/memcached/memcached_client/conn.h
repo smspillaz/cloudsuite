@@ -20,11 +20,33 @@
 #include <unistd.h>
 #include "config.h"
 
+#define QUEUE_SIZE 1000000
+#define INCR_FIX_QUEUE_SIZE 1000
+
+struct worker;
+
 struct conn {
   int sock;
   int port;	
   int uid;
   int protocol;
+
+  int head;
+  int tail;
+  int n_requests;
+
+  int incr_fix_queue_tail;
+  int incr_fix_queue_head;
+
+
+  //Circular queue
+  struct request* request_queue[QUEUE_SIZE];
+  int current_request_id;
+
+  struct request* incr_fix_queue[INCR_FIX_QUEUE_SIZE];
+
+  //Observing-only reference
+  struct worker *worker;
 };
 
 struct conn* createConnection(const char* ip_address, int port, int protocol, int naggles);

@@ -114,7 +114,12 @@ void printGlobalStats(struct config* config) {
   int i;
   printf("Outstanding requests per worker:\n");
   for(i=0; i<config->n_workers; i++){
-    printf("%d ", config->workers[i]->n_requests);
+    int j = 0;
+    int n_requests_for_worker = 0;
+    for(; j<config->workers[i]->nConnections; ++j) {
+      n_requests_for_worker += config->workers[i]->connections[j]->n_requests;
+    }
+    printf("%d ", n_requests_for_worker);
   } 
   printf("\n");
   //Reset stats

@@ -1,5 +1,6 @@
 
 #include "worker.h"
+#include "conn.h"
 
 void* workerFunction(void* arg) {
 
@@ -44,11 +45,15 @@ void workerLoop(struct worker* worker) {
   int i;
   for( i = 0; i < worker->nConnections; i++) {
 
-    struct event* ev = event_new(worker->event_base, worker->connections[i]->sock, EV_WRITE|EV_PERSIST, sendCallback, worker);
+    //NOTE: Even though this function waits until we have
+    //write capacity on the channel, it sends the request on
+    //a random connection (but we keep track of which connection
+    //it got sent on).
+    struct event* ev = event_new(worker->event_base, worker->connections[i]->sock, EV_WRITE|EV_PERSIST, sendCallback, worker->connections[i]);
     event_priority_set(ev, 1);
     event_add(ev, NULL);
 
-    ev = event_new(worker->event_base, worker->connections[i]->sock, EV_READ|EV_PERSIST, receiveCallback, worker);
+    ev = event_new(worker->event_base, worker->connections[i]->sock, EV_READ|EV_PERSIST, receiveCallback, worker->connections[i]);
     event_priority_set(ev, 2);
     event_add(ev, NULL);
 
@@ -69,39 +74,40 @@ void workerLoop(struct worker* worker) {
 }//End workerLoop()
 
 
-int pushRequest(struct worker* worker, struct request* request) {
+int pushRequest(struct conn* connection, struct request* request) {
 
 //  printf("push: size %d head %d tail %d\n", worker->n_requests, worker->head, worker->tail);
 
-  if(worker->n_requests == QUEUE_SIZE){
+  if(connection->n_requests == QUEUE_SIZE){
     printf("Reached queusize max\n");
     return 0;
   }
   
-  worker->request_queue[worker->tail] = request;
-  worker->tail = (worker->tail + 1) % QUEUE_SIZE;
-  worker->n_requests++;
+  connection->request_queue[connection->tail] = request;
+  connection->tail = (connection->tail + 1) % QUEUE_SIZE;
+  connection->n_requests++;
 
   return 1;
 
 }//End pushRequest()
 
-struct request* getNextRequest(struct worker* worker) {
+struct request* getNextRequest(struct conn* connection) {
 
-  if(worker->n_requests == 0) {
+  if(connection->n_requests == 0) {
     return NULL;
   }
 
-  struct request* request = worker->request_queue[worker->head];
-  worker->head = (worker->head + 1) % QUEUE_SIZE;
-  worker->n_requests--;
+  struct request* request = connection->request_queue[connection->head];
+  connection->head = (connection->head + 1) % QUEUE_SIZE;
+  connection->n_requests--;
 
   return request;
 
 }//End getNextRequest()
 
 void sendCallback(int fd, short eventType, void* args) {
-  struct worker* worker = args;
+  struct conn* connection = args;
+  struct worker* worker = connection->worker;
   struct timeval timestamp, timediff, timeadd;
   gettimeofday(&timestamp, NULL);
 
@@ -129,9 +135,9 @@ void sendCallback(int fd, short eventType, void* args) {
   timeradd(&(worker->last_write_time), &timeadd, &(worker->last_write_time));
 
   struct request* request = NULL;
-  if(worker->incr_fix_queue_tail != worker->incr_fix_queue_head) {
-    request = worker->incr_fix_queue[worker->incr_fix_queue_head];
-    worker->incr_fix_queue_head = (worker->incr_fix_queue_head + 1) % INCR_FIX_QUEUE_SIZE;
+  if(connection->incr_fix_queue_tail != connection->incr_fix_queue_head) {
+    request = connection->incr_fix_queue[connection->incr_fix_queue_head];
+    connection->incr_fix_queue_head = (connection->incr_fix_queue_head + 1) % INCR_FIX_QUEUE_SIZE;
 //    printf("fixing\n");
   } else {
   //  printf(")preload %d warmup key %d\n", worker->config->pre_load, worker->warmup_key);
@@ -144,7 +150,7 @@ void sendCallback(int fd, short eventType, void* args) {
   if(request->header.opcode == OP_SET){
 //    printf("Generated SET request of size %d\n", request->value_size);
   }
-  if( !pushRequest(worker, request) ) {
+  if( !pushRequest(request->connection, request) ) {
     //Queue is full, bail
 //    printf("Full queue\n");
     deleteRequest(request);
@@ -160,9 +166,13 @@ void sendCallback(int fd, short eventType, void* args) {
 
 void receiveCallback(int fd, short eventType, void* args) {
 
-  struct worker* worker = args;
+  struct conn* conn = args;
+  struct worker* worker = conn->worker;
 
-  struct request* request = getNextRequest(worker);
+  //NOTE: getNextRequest happens on the *connection* and not on the
+  //*worker*. Requests from different connections may arrive out of
+  //order as between each other, we can't just rely on one counter.
+  struct request* request = getNextRequest(conn);
   if(request == NULL) { 
     printf("Error: Tried to get a null request\n");
     return;
@@ -230,6 +240,7 @@ void createWorkers(struct config* config) {
     int server=i % config->n_servers; 
     for(j = 0; j < num_worker_connections; j++) {
       config->workers[i]->connections[j] = createConnection(config->server_ip_address[server], config->server_port[server], config->protocol_mode, config->naggles);
+      config->workers[i]->connections[j]->worker = config->workers[i];
     }
     int rc;
     //Create receive thread
@@ -250,15 +261,11 @@ struct worker* createWorker(struct config* config, int cpuNum) {
   struct worker* worker = malloc(sizeof(struct worker));
   worker->event_base = event_base_new();
 
-
   worker->config = config;
-  worker->head = 0;
-  worker->tail = 0;
-  worker->n_requests = 0;
   worker->cpu_num = cpuNum;
   worker->interarrival_time = 0;
-  worker->incr_fix_queue_tail = 0; // THSES probably need to be fixed
-  worker->incr_fix_queue_head = 0;
+  worker->current_request_id = 0;
+
   if(config->dep_dist != NULL && config->pre_load) {
     worker->warmup_key = config->keysToPreload-1;
     worker->warmup_key_check = 0;

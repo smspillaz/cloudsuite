@@ -182,12 +182,12 @@ int processResponse(struct response* response, int final, double difftime){
     struct conn* conn = response->request->connection;
     struct request* request = createRequest(op, conn, worker, key, 0, type);
     request->next_request = NULL;
-    if( ((worker->incr_fix_queue_tail + 1) % INCR_FIX_QUEUE_SIZE) == worker->incr_fix_queue_head) {
+    if( ((conn->incr_fix_queue_tail + 1) % INCR_FIX_QUEUE_SIZE) == conn->incr_fix_queue_head) {
       printf("I was hoping this would never happen\n");
       exit(-1);
     }
-    worker->incr_fix_queue[worker->incr_fix_queue_tail] = request;
-    worker->incr_fix_queue_tail = (worker->incr_fix_queue_tail + 1) % INCR_FIX_QUEUE_SIZE;
+    conn->incr_fix_queue[conn->incr_fix_queue_tail] = request;
+    conn->incr_fix_queue_tail = (conn->incr_fix_queue_tail + 1) % INCR_FIX_QUEUE_SIZE;
   }
 
 
