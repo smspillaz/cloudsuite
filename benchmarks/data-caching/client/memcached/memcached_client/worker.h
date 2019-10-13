@@ -2,7 +2,7 @@
 #define WORKER_H
 
 #include <pthread.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <event2/event.h>
 #include <sys/time.h>
 #include <errno.h>

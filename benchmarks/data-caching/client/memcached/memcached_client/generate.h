@@ -4,7 +4,7 @@
 
 #include "config.h"
 #include "worker.h"
-#include <malloc.h>
+#include <stdlib.h>
 #include <math.h> 
 
 #define MAX_KEY_SIZE 250

@@ -8,7 +8,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>

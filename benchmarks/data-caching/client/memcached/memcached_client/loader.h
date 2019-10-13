@@ -6,7 +6,7 @@
 
 
 #include <event2/event.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
