@@ -46,8 +46,8 @@ RUN buildDeps='curl gcc libc6-dev libevent-dev make perl' \
 	&& tar -xzf memcached.tar.gz -C /usr/src/memcached --strip-components=1 \
 	&& rm memcached.tar.gz \
 	&& cd /usr/src/memcached \
-	&& ./configure \
-	&& make \
+	&& CFLAGS="-g -O3 -pthread" ./configure \
+	&& make CFLAGS="-g -O3 -pthread" \
 	&& make install \
 	&& cd / && rm -rf /usr/src/memcached \
 	&& apt-get purge -y --auto-remove $buildDeps
