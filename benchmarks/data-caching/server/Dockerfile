@@ -27,6 +27,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV MEMCACHED_VERSION 1.4.24
 ENV MEMCACHED_SHA1 32a798a37ef782da10a09d74aa1e5be91f2861db
 
+RUN git clone git://github.com/smspillaz/dynamorio && \
+	cd dynamorio && \
+	mkdir build && \
+	cd build && \
+	cmake .. -DCMAKE_INSTALL_PREFIX=/usr && \
+	make && \
+	make && \
+  make install
+
 RUN buildDeps='curl gcc libc6-dev libevent-dev make perl' \
 	&& set -x \
 	&& apt-get update && apt-get install -y $buildDeps --no-install-recommends \
