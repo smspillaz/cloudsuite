@@ -20,6 +20,8 @@ RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ xenial main'
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		libevent-2.0-5 \
+		git \
+		cmake \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV MEMCACHED_VERSION 1.4.24
