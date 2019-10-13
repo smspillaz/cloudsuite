@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 COPY memcached.tar.gz /memcached.tar.gz
 
-RUN apt-get update && apt-get install -y libevent-2.0-5 vim --no-install-recommends \
+RUN apt-get update && apt-get install -y libevent-2.0-5 vim valgrind gdb telnet --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN buildDeps='curl gcc libc6-dev libevent-dev make' \
