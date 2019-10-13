@@ -181,7 +181,9 @@ void receiveCallback(int fd, short eventType, void* args) {
   struct timeval readTimestamp, timediff;
   gettimeofday(&readTimestamp, NULL);
   timersub(&readTimestamp, &(request->send_time), &timediff);
-  double diff = timediff.tv_usec * 1e-6  + timediff.tv_sec;
+
+  //XXX: On some implementations there is clock skew. Don't know why.
+  double diff = fmax(0.0, timediff.tv_usec * 1e-6  + timediff.tv_sec);
 
   receiveResponse(request, diff); 
   deleteRequest(request);
