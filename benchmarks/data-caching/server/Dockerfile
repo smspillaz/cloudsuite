@@ -8,6 +8,16 @@ RUN groupadd -r memcache && useradd -r -g memcache memcache
 
 ENV DEBIAN_FRONTEND noninteractive
 
+RUN apt-get update && apt-get -y --no-install-recommends install \
+	apt-transport-https \
+	ca-certificates \
+	gnupg \
+	software-properties-common \
+	wget \
+	build-essential
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ xenial main'
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		libevent-2.0-5 \
 	&& rm -rf /var/lib/apt/lists/*
