@@ -21,8 +21,20 @@ RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ xenial main'
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		libevent-2.0-5 \
 		git \
-		cmake \
+                build-essential \
+                libarchive-dev \
+                libbz2-dev \
+                libcurl4-openssl-dev \
+                libexpat-dev \
+                liblzma-dev \
+                libssl-dev \
+                libncurses5-dev \
+                libuv1-dev \
+                python3-sphinx \
+                zlib1g-dev \
 	&& rm -rf /var/lib/apt/lists/*
+
+RUN git clone git://github.com/kitware/CMake && cd CMake && ./bootstrap && make && make install
 
 ENV MEMCACHED_VERSION 1.4.24
 ENV MEMCACHED_SHA1 32a798a37ef782da10a09d74aa1e5be91f2861db
