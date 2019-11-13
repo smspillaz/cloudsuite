@@ -8,7 +8,7 @@ for i in 64 4096; do
 done
 
 for i in 2 64; do
-  echo "L1 cache, 496 keys, $i conncetions"
+  echo "L1 cache, 4096 keys, $i conncetions"
   CLIENT_ARGS="-rps 180000 -k 4096 -c $i" bash server/run-perf-tests.sh
 done
 
