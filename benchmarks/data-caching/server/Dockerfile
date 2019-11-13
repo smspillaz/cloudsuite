@@ -48,6 +48,8 @@ RUN git clone git://github.com/smspillaz/dynamorio && \
 	make && \
   make install
 
+RUN apt-get update && apt-cache search linux-tools && apt-get install -y linux-tools-generic linux-tools-aws linux-tools-4.15.0-1051-aws;
+
 RUN buildDeps='curl gcc libc6-dev libevent-dev make perl' \
 	&& set -x \
 	&& apt-get update && apt-get install -y $buildDeps --no-install-recommends \
