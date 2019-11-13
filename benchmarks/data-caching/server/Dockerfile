@@ -66,6 +66,8 @@ RUN buildDeps='curl gcc libc6-dev libevent-dev make perl' \
 	&& cd / && rm -rf /usr/src/memcached \
 	&& apt-get purge -y --auto-remove $buildDeps
 
+ADD docker-entrypoint.sh .
+
 USER memcache
 EXPOSE 11211
-CMD ["dynamorio/build/bin64/drrun", "-t", "drcachesim", "-offline", "-outdir", "/output", "--", "memcached", "-t", "2", "-m", "2048", "-n", "550"]
+CMD ["bash", "docker-entrypoint.sh", "memcached", "-t", "1", "-m", "2048", "-n", "550"]
