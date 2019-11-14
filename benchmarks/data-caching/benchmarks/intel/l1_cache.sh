@@ -1,5 +1,5 @@
 #!/bin/bash
-export PERF_ARGS="-e L1-icache-load-misses,L1-icache-loads,instructions"
+export PERF_ARGS="-e L1-icache-load-misses,icache.hit,instructions"
 export SERVER_ARGS="-t 1 -m 4096 -n 550"
 
 for i in 64 4096; do
