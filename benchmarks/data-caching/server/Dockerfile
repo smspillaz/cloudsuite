@@ -48,7 +48,7 @@ RUN git clone git://github.com/smspillaz/dynamorio && \
 	make && \
   make install
 
-RUN apt-get update && apt-cache search linux-tools && apt-get install -y linux-tools-generic linux-tools-aws linux-tools-4.15.0-1051-aws;
+RUN apt-get update && apt-cache search linux-tools && apt-get install -y linux-tools-generic linux-tools-aws linux-tools-4.15.0-1051-aws linux-tools-4.15.0-66-generic;
 
 RUN buildDeps='curl gcc libc6-dev libevent-dev make perl' \
 	&& set -x \
