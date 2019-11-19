@@ -2,6 +2,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pprint
 
+LOGDIR = "logs/"
+
 class Benchmark:
     def __init__(self, key, values):
         self.key = key
@@ -67,53 +69,65 @@ pp = pprint.PrettyPrinter(indent=4)
 intel_InstrMix = Benchmark(
     "Instructions Stack",
     ["instructions:k", "cycles:k", "instructions:u", "cycles:u"])
-intel_InstrMix.decodeLog("instructions-stack.sh.intel.log")
+intel_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.intel.log")
 pp.pprint(intel_InstrMix.logVals)
 
-if True:
-    connections = []
-    user_i_ratio = []
-    kernel_i_ratio = []
-    user_c_ratio = []
-    kernel_c_ratio = []
-    for k, v in intel_InstrMix.logVals['4096 keys'].items():
-        if "conncetions" in k:
-            connections.append(k)
-            kernel_i = v['instructions:k']
-            user_i = v['instructions:u']
-            kernel_c = v['cycles:k']
-            user_c = v['cycles:u']
-            i_tot = kernel_i + user_i
-            c_tot = kernel_c + user_c
+connections = []
+user_i_ratio = []
+kernel_i_ratio = []
+user_c_ratio = []
+kernel_c_ratio = []
+for k, v in intel_InstrMix.logVals['4096 keys'].items():
+    if "conncetions" in k:
+        connections.append(k)
+        kernel_i = v['instructions:k']
+        user_i = v['instructions:u']
+        kernel_c = v['cycles:k']
+        user_c = v['cycles:u']
+        i_tot = kernel_i + user_i
+        c_tot = kernel_c + user_c
 
-            user_i_ratio.append((user_i / i_tot) * 100)
-            kernel_i_ratio.append((kernel_i / i_tot) * 100)
-            user_c_ratio.append((user_c / c_tot) * 100)
-            kernel_c_ratio.append((kernel_c / c_tot) * 100)
-    
-    plt.subplot(2,1,1)
-    plt.plot(user_i_ratio, label="User, Intel")
-    plt.ylabel("User instr / Instr tot [%]")
-    plt.legend()
-    plt.twinx()
-    plt.plot(kernel_i_ratio, label="Kernel, Intel", color="orange")
-    plt.ylabel("Kernel instr / Instr tot [%]")
-    plt.xticks(range(len(connections)), connections)
-    plt.xlabel("Keys")
-    plt.legend()
+        user_i_ratio.append((user_i / i_tot) * 100)
+        kernel_i_ratio.append((kernel_i / i_tot) * 100)
+        user_c_ratio.append((user_c / c_tot) * 100)
+        kernel_c_ratio.append((kernel_c / c_tot) * 100)
 
-    # Branch instruction mix
-    plt.subplot(2,1,2)
-    plt.plot(user_c_ratio, label="User, Intel")
-    plt.ylabel("User cycles per total cycles [%]")
-    plt.legend()
-    plt.twinx()
-    plt.plot(kernel_c_ratio, label="Kernel, Intel", color="orange")
-    plt.xticks(range(len(connections)), connections)
-    plt.ylabel("Kernel cycles per total cycles [%]")
-    plt.xlabel("Keys")
-    plt.legend()
-    plt.show()
+plt.subplot(2,2,1)
+plt.title("User versus Kernel instruction mix")
+plt.plot(user_i_ratio, label="User, Intel")
+plt.ylabel("User instr / Instr tot [%]")
+plt.legend()
+plt.twinx()
+plt.plot(kernel_i_ratio, label="Kernel, Intel", color="orange")
+plt.ylabel("Kernel instr / Instr tot [%]")
+plt.xticks(range(len(connections)), connections)
+plt.xlabel("Keys")
+plt.legend()
+
+# Ratio stackplot
+plt.subplot(2,2,2)
+plt.stackplot(range(len(user_i_ratio)), user_i_ratio, kernel_i_ratio, labels=["User", "Kernel"])
+plt.ylabel("Instructions")
+plt.legend()
+
+plt.xticks(range(len(connections)), connections)
+plt.xlabel("Keys")
+plt.legend()
+
+# Cycle ratio
+"""
+plt.subplot(2,2,3)
+plt.plot(user_c_ratio, label="User, Intel")
+plt.ylabel("User cycles per total cycles [%]")
+plt.legend()
+plt.twinx()
+plt.plot(kernel_c_ratio, label="Kernel, Intel", color="orange")
+plt.xticks(range(len(connections)), connections)
+plt.ylabel("Kernel cycles per total cycles [%]")
+plt.xlabel("Keys")
+plt.legend()
+plt.show()
+"""
 
 ################################################################################
 # Branch predictor
@@ -121,38 +135,38 @@ if True:
 intel_branchPredictor = Benchmark(
     "Branch predictor",
     ["branch-misses", "branch-instructions", "instructions"])
-intel_branchPredictor.decodeLog("branch_predictor.sh.intel.log")
+intel_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.intel.log")
 pp.pprint(intel_branchPredictor.logVals)
 
 # 4096 keys, varying connections
-if True:
-    # Branch misses
-    plt.subplot(2,1,1)
-    connections = []
-    br_miss = []
-    br_mix = []
-    for k, v in intel_branchPredictor.logVals['4096 keys'].items():
-        if "conncetions" in k:
-            connections.append(k)
-            missRatio = (v['branch-misses'] / v['branch-instructions']) * 100 
-            brRatio = (v['branch-instructions'] / v['instructions']) * 100
-            br_miss.append(missRatio)
-            br_mix.append(brRatio)
+# Branch misses
+plt.subplot(2,1,1)
+connections = []
+br_miss = []
+br_mix = []
+for k, v in intel_branchPredictor.logVals['4096 keys'].items():
+    if "conncetions" in k:
+        connections.append(k)
+        missRatio = (v['branch-misses'] / v['branch-instructions']) * 100 
+        brRatio = (v['branch-instructions'] / v['instructions']) * 100
+        br_miss.append(missRatio)
+        br_mix.append(brRatio)
 
-    plt.plot(br_miss, label="Intel")
-    plt.xticks(range(len(connections)), connections)
-    plt.ylabel("Branch misses per branch instruction [%]")
-    plt.xlabel("Keys")
-    plt.legend()
+plt.plot(br_miss, label="x86")
+plt.title("Branch misses & branch instructions")
+plt.xticks(range(len(connections)), connections)
+plt.ylabel("Branch misses per branch instruction [%]")
+plt.xlabel("Keys")
+plt.legend()
 
-    # Branch instruction mix
-    plt.subplot(2,1,2)
-    plt.plot(br_mix, label="Intel")
-    plt.xticks(range(len(connections)), connections)
-    plt.ylabel("Branch instructions per instruction [%]")
-    plt.xlabel("Keys")
-    plt.legend()
-    plt.show()
+# Branch instruction mix
+plt.subplot(2,1,2)
+plt.plot(br_mix, label="x86")
+plt.xticks(range(len(connections)), connections)
+plt.ylabel("Branch instructions per instruction [%]")
+plt.xlabel("Keys")
+plt.legend()
+plt.show()
 
 
 ################################################################################
@@ -160,9 +174,83 @@ if True:
 ################################################################################
 intel_L1icache = Benchmark(
     "L1 cache",
-    ["L1-icache-load-misses", "L1-icache-loads", "instructions"])
-intel_L1icache.decodeLog("l1_cache.sh.intel.log")
+    ["L1-icache-load-misses", "icache.hit", "instructions"])
+intel_L1icache.decodeLog(LOGDIR + "l1_cache.sh.intel.log")
 pp.pprint(intel_L1icache.logVals)
+
+connections = []
+hitrate = []
+for k, v in intel_L1icache.logVals.items():
+    if k == '4096 keys':
+        # Varying connections, stored as nested dictionaries
+        for i, j in v.items():
+            if(type(j) is dict):
+                connections.append(i.split()[0]) # Just grab the number
+                hits = j['icache.hit']
+                misses = j['L1-icache-load-misses']
+                total = hits + misses
+                hitRatio = (hits / total) * 100 
+                hitrate.append(hitRatio)
+
+# Varying connections
+plt.subplot(1,1,1)
+plt.plot(hitrate, label="x86")
+plt.xticks(range(len(connections)), connections)
+plt.title("L1I Cache")
+plt.ylabel("L1I Hit Ratio [%]")
+plt.xlabel("Connections")
+plt.legend()
+
+plt.show()
+
+
+################################################################################
+# L1D Cache
+################################################################################
+intel_L1dcache = Benchmark(
+    "L1D cache",
+    ["L1-dcache-load-misses", "L1-dcache-loads", "instructions"])
+intel_L1dcache.decodeLog(LOGDIR + "l1d_cache.sh.intel.log")
+pp.pprint(intel_L1dcache.logVals)
+
+plt.subplot(2,1,1)
+keys = []
+connections = []
+l1d_hitrate_varyingkeys = []
+l1d_hitrate_4096_connections = []
+for k, v in intel_L1dcache.logVals.items():
+    if "keys" in k:
+        # Varying keys
+        keys.append(k.split()[0]) # Just grab the number
+        hitratio = (1 - (v['L1-dcache-load-misses'] / v['L1-dcache-loads'])) * 100 
+        l1d_hitrate_varyingkeys.append(hitratio)
+    
+    if k == '4096 keys':
+        # Varying connections, stored as nested dictionaries
+        for i, j in v.items():
+            if(type(j) is dict):
+                connections.append(i.split()[0]) # Just grab the number
+                hitratio = (1 - (j['L1-dcache-load-misses'] / j['L1-dcache-loads'])) * 100 
+                l1d_hitrate_4096_connections.append(hitratio)
+
+# Varying key size
+plt.subplot(2,1,1)
+plt.title("L1D Properties with varying key and connection count")
+plt.plot(l1d_hitrate_varyingkeys, label="x86")
+plt.xticks(range(len(keys)), keys)
+plt.ylabel("L1D Hit Ratio [%]")
+plt.xlabel("Keys")
+plt.legend()
+
+# Varying connections
+plt.subplot(2,1,2)
+plt.plot(l1d_hitrate_4096_connections, label="x86")
+plt.xticks(range(len(connections)), connections)
+plt.ylabel("L1D Hit Ratio [%]")
+plt.xlabel("Connections")
+plt.legend()
+
+plt.show()
 
 
 ################################################################################
@@ -171,7 +259,7 @@ pp.pprint(intel_L1icache.logVals)
 intel_LLCcache = Benchmark(
     "LLC cache",
     ["LLC-loads", "LLC-load-misses"])
-intel_LLCcache.decodeLog("llc.sh.intel.log")
+intel_LLCcache.decodeLog(LOGDIR + "llc.sh.intel.log")
 pp.pprint(intel_LLCcache.logVals)
 
 keys = []
@@ -197,7 +285,7 @@ for k, v in intel_LLCcache.logVals.items():
 # Varying key size
 plt.subplot(2,1,1)
 plt.title("LLC Properties with varying key and connection count")
-plt.plot(VarKeysHitRatio, label="Intel")
+plt.plot(VarKeysHitRatio, label="x86")
 plt.xticks(range(len(keys)), keys)
 plt.ylabel("LLC Hit Ratio [%]")
 plt.xlabel("Keys")
@@ -205,7 +293,7 @@ plt.legend()
 
 # Varying connections
 plt.subplot(2,1,2)
-plt.plot(VarConnHitRatio, label="Intel")
+plt.plot(VarConnHitRatio, label="x86")
 plt.xticks(range(len(connections)), connections)
 plt.ylabel("LLC Hit Ratio [%]")
 plt.xlabel("Connections")
