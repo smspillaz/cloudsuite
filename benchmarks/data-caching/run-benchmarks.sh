@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 ARCH=$1
 OUTPUT=$2
 
