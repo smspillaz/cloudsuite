@@ -29,39 +29,40 @@ class Benchmark:
             for line in f.readlines():
                 if self.endString in line:
                     inSegment = False
+                    segmentKeys = []
                     segmentCount += 1
                 
                 if inSegment:
-                    # Parse test parameters
-                    if self.key in line:
-                        #Format: "self.key, # x, # y, ..."
-                        segments = line.strip().split(",")
-                        if self.key != segments[0]:
-                            print("Parse error, expected key")
-                        segments = segments[1:]
-                        for seg in segments:
-                            seg = seg.strip()
-                            segmentKeys.append(seg)
-
-                    else:
-                        # Parse performance counter stats
-                        # Format: "#####    value       #comment"
-                        tokens = line.split()
-                        if len(tokens) > 1 and (tokens[1] in self.values):
-                            k = tokens[1]
-                            v = int(tokens[0])
-                            self.addToMap(self.logVals, segmentKeys + [k], v)
-                            #logVals[k].append(v)
+                    # Parse performance counter stats
+                    # Format: "#####    value       #comment"
+                    tokens = line.split()
+                    if len(tokens) > 1 and (tokens[1] in self.values):
+                        k = tokens[1]
+                        v = int(tokens[0])
+                        self.addToMap(self.logVals, segmentKeys + [k], v)
+                        #logVals[k].append(v)
                 
-                if self.startString in line:
+                if self.key in line and not inSegment:
+                    #Format: "self.key, # x, # y, ..."
+                    segments = line.strip().split(",")
+                    if self.key != segments[0]:
+                        print("Parse error, expected key")
+                    segments = segments[1:]
+                    for seg in segments:
+                        seg = seg.strip()
+                        segmentKeys.append(seg)
                     inSegment = True
-                    segmentKeys = []
 
 
 pp = pprint.PrettyPrinter(indent=4)
 
 ################################################################################
 # User/Kernel instructions & Cycles
+
+# Intel x86 system 1    : x
+# Intel x86 system 2    : 
+# Arm Cavium            : 
+# Amazon EC2 A1         : 
 
 # @todo: We need to compare this with total instruction count, to see how the
 # ratios change wrt. total instructions
@@ -70,7 +71,6 @@ intel_InstrMix = Benchmark(
     "Instructions Stack",
     ["instructions:k", "cycles:k", "instructions:u", "cycles:u"])
 intel_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.intel.log")
-pp.pprint(intel_InstrMix.logVals)
 
 connections = []
 user_i_ratio = []
@@ -115,7 +115,6 @@ plt.xlabel("Keys")
 plt.legend()
 
 # Cycle ratio
-"""
 plt.subplot(2,2,3)
 plt.plot(user_c_ratio, label="User, Intel")
 plt.ylabel("User cycles per total cycles [%]")
@@ -127,50 +126,80 @@ plt.ylabel("Kernel cycles per total cycles [%]")
 plt.xlabel("Keys")
 plt.legend()
 plt.show()
-"""
 
 ################################################################################
 # Branch predictor
+# Intel x86 system 1    : x
+# Intel x86 system 2    : 
+# Arm Cavium            : x
+# Amazon EC2 A1         : 
 ################################################################################
 intel_branchPredictor = Benchmark(
     "Branch predictor",
     ["branch-misses", "branch-instructions", "instructions"])
 intel_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.intel.log")
-pp.pprint(intel_branchPredictor.logVals)
+
+arm_cavium_branchPredictor = Benchmark(
+    "Branch predictor",
+    ["armv8_pmuv3_0/br_mis_pred/:u", "armv8_pmuv3_0/br_pred/:u", "instructions:u"])
+arm_cavium_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.arm.cavium.log")
 
 # 4096 keys, varying connections
 # Branch misses
 plt.subplot(2,1,1)
 connections = []
-br_miss = []
-br_mix = []
+x86_br_miss = []
+x86_br_mix = []
 for k, v in intel_branchPredictor.logVals['4096 keys'].items():
     if "conncetions" in k:
         connections.append(k)
         missRatio = (v['branch-misses'] / v['branch-instructions']) * 100 
         brRatio = (v['branch-instructions'] / v['instructions']) * 100
-        br_miss.append(missRatio)
-        br_mix.append(brRatio)
+        x86_br_miss.append(missRatio)
+        x86_br_mix.append(brRatio)
 
-plt.plot(br_miss, label="x86")
+arm_cavium_br_miss = []
+arm_cavium_br_mix = []
+for k, v in arm_cavium_branchPredictor.logVals['4096 keys'].items():
+    if "conncetions" in k:
+        if k not in connections:
+            connections.append(k)
+        miss = v['armv8_pmuv3_0/br_mis_pred/:u']
+        predict = v['armv8_pmuv3_0/br_pred/:u']
+        total = miss + predict
+        missRatio = (miss / total) * 100 
+        brRatio = (total / v['instructions:u']) * 100
+        arm_cavium_br_miss.append(missRatio)
+        arm_cavium_br_mix.append(brRatio)
+
+# Just show the number of connections (Format of key is: "# connections")
+connections = [x.split(' ')[0] for x in connections]
+
+plt.plot(x86_br_miss, label="x86")
+plt.plot(arm_cavium_br_miss, label="ARM (Cavium)")
 plt.title("Branch misses & branch instructions")
 plt.xticks(range(len(connections)), connections)
 plt.ylabel("Branch misses per branch instruction [%]")
-plt.xlabel("Keys")
+plt.xlabel("Connections")
 plt.legend()
 
 # Branch instruction mix
 plt.subplot(2,1,2)
-plt.plot(br_mix, label="x86")
+plt.plot(x86_br_mix, label="x86")
+plt.plot(arm_cavium_br_mix, label="ARM (Cavium)")
 plt.xticks(range(len(connections)), connections)
 plt.ylabel("Branch instructions per instruction [%]")
-plt.xlabel("Keys")
+plt.xlabel("Connections")
 plt.legend()
 plt.show()
 
 
 ################################################################################
 # L1I Cache
+# Intel x86 system 1    : x
+# Intel x86 system 2    : 
+# Arm Cavium            :
+# Amazon EC2 A1         : 
 ################################################################################
 intel_L1icache = Benchmark(
     "L1 cache",
@@ -206,6 +235,10 @@ plt.show()
 
 ################################################################################
 # L1D Cache
+# Intel x86 system 1    : x
+# Intel x86 system 2    : 
+# Arm Cavium            :
+# Amazon EC2 A1         : 
 ################################################################################
 intel_L1dcache = Benchmark(
     "L1D cache",
@@ -255,6 +288,10 @@ plt.show()
 
 ################################################################################
 # LLC Cache
+# Intel x86 system 1    : x
+# Intel x86 system 2    : 
+# Arm Cavium            :
+# Amazon EC2 A1         : 
 ################################################################################
 intel_LLCcache = Benchmark(
     "LLC cache",
