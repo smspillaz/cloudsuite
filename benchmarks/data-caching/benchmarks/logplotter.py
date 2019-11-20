@@ -125,17 +125,17 @@ for k, v in arm_amazon_InstrMix.logVals['4096 keys'].items():
 
 ################################### Plotting ###################################
 plt.subplot(1,1,1)
-plt.title("Kernel instructions ratio")
+plt.title("Kernel vs. Total Instruction Ratio @ 4096 Keys, Varying Connections")
 plt.plot(x86_kernel_i_ratio, label="User, Intel")
 plt.plot(arm_amazon_kernel_i_ratio, label="User, ARM (Amazon)")
-plt.ylabel("Kernel instr / Instr tot [%]")
+plt.ylabel("[%]")
 plt.legend()
 # plt.twinx()
 # plt.plot(x86_kernel_i_ratio, label="Kernel, Intel", color="orange")
 # plt.plot(arm_amazon_kernel_i_ratio, label="Kernel, ARM (Amazon)", color="orange")
 #plt.ylabel("Kernel instr / Instr tot [%]")
 plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections)
-plt.xlabel("Keys")
+plt.xlabel("Connections")
 plt.legend()
 
 ## Ratio stackplot
@@ -190,7 +190,6 @@ arm_amazon_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.arm.amazon.lo
 ############################### Data Extraction ################################
 # 4096 keys, varying connections
 # Branch misses
-plt.subplot(2,1,1)
 connections = []
 x86_br_miss = []
 x86_br_mix = []
@@ -233,22 +232,24 @@ for k, v in arm_amazon_branchPredictor.logVals['4096 keys'].items():
 connections = [x.split(' ')[0] for x in connections]
 
 ################################### Plotting ###################################
+plt.subplot(1,2,1)
 plt.plot(x86_br_miss, label="x86")
 plt.plot(arm_cavium_br_miss, label="ARM (Cavium)")
 plt.plot(arm_amazon_br_miss, label="ARM (Amazon)")
-plt.title("Branch misses & branch instructions")
+plt.title("Branch misses per branch instruction")
 plt.xticks(range(len(connections)), connections)
-plt.ylabel("Branch misses per branch instruction [%]")
+plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
 
 # Branch instruction mix
-plt.subplot(2,1,2)
+plt.subplot(1,2,2)
 plt.plot(x86_br_mix, label="x86")
 plt.plot(arm_cavium_br_mix, label="ARM (Cavium)")
 plt.plot(arm_amazon_br_mix, label="ARM (Amazon)")
 plt.xticks(range(len(connections)), connections)
-plt.ylabel("Branch instructions per instruction [%]")
+plt.title("Branch instructions per instruction")
+plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
 plt.show()
@@ -370,7 +371,7 @@ for k, v in intel_L1dcache.logVals.items():
         # Varying keys
         appendIfNotInlist(keys, k.split()[0])
         hitratio = (1 - (v['L1-dcache-load-misses'] / v['L1-dcache-loads'])) * 100 
-        x86_l1d_hitrate_varyingkeys.append(hitratio)
+        x86_l1d_hitrate_varyingkeys.append(hitratio),
     
     if k == '4096 keys':
         # Varying connections, stored as nested dictionaries
@@ -382,23 +383,24 @@ for k, v in intel_L1dcache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying key size
-plt.subplot(2,1,1)
+plt.subplot(1,2,1)
 plt.title("L1D Properties with varying key and connection count")
 plt.plot(x86_l1d_hitrate_varyingkeys, label="x86")
 plt.plot(arm_cavium_l1d_hitrate_varyingkeys, label="ARM (Cavium)")
 plt.plot(arm_amazon_l1d_hitrate_varyingkeys, label="ARM (amazon)")
-plt.xticks(range(len(keys)), keys)
-plt.ylabel("L1D Hit Ratio [%]")
+plt.xticks(range(len(keys)), keys, rotation=20)
+plt.title("L1D Hit Ratio With Varying Keys")
+plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
 
 # Varying connections
-plt.subplot(2,1,2)
+plt.subplot(1,2,2)
 plt.plot(x86_l1d_hitrate_4096_connections, label="x86")
 plt.plot(arm_cavium_l1d_hitrate_4096_connections, label="ARM (Cavium)")
 plt.plot(arm_amazon_l1d_hitrate_4096_connections, label="ARM (Amazon)")
-plt.xticks(range(len(connections)), connections)
-plt.ylabel("L1D Hit Ratio [%]")
+plt.xticks(range(len(connections)), connections, rotation=20)
+plt.title("L1D Hit Ratio @ 4096 Keys, Varying Connections")
 plt.xlabel("Connections")
 plt.legend()
 
@@ -443,19 +445,21 @@ for k, v in arm_cavium_L2dcache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying key size
-plt.subplot(2,1,1)
+plt.subplot(1,2,1)
 plt.title("L2D Refill ratio")
 plt.plot(arm_cavium_refillRatio_var_keys, label="Arm (Cavium)")
 plt.xticks(range(len(keys)), keys)
-plt.ylabel("L2D Refill Ratio [%]")
+plt.title("L2D Refill Ratio With Varying Keys")
+plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
 
 # Varying connections
-plt.subplot(2,1,2)
+plt.subplot(1,2,2)
 plt.plot(arm_cavium_refillRatio_var_conn, label="Arm (Cavium)")
 plt.xticks(range(len(connections)), connections)
-plt.ylabel("LLC Refill Ratio [%]")
+plt.title("L2D Refill Ratio With @ 4096 Keys, Varying Connections")
+plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
 
@@ -502,19 +506,20 @@ for k, v in intel_LLCcache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying key size
-plt.subplot(2,1,1)
-plt.title("LLC Properties with varying key and connection count")
+plt.subplot(1,2,1)
 plt.plot(VarKeysHitRatio, label="x86")
 plt.xticks(range(len(keys)), keys)
-plt.ylabel("LLC Hit Ratio [%]")
+plt.title("LLC Hit Ratio With Varying Keys")
+plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
 
 # Varying connections
-plt.subplot(2,1,2)
+plt.subplot(1,2,2)
 plt.plot(VarConnHitRatio, label="x86")
 plt.xticks(range(len(connections)), connections)
-plt.ylabel("LLC Hit Ratio [%]")
+plt.title("LLC Hit Ratio @ 4096 Keys, Varying Connections")
+plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
 
