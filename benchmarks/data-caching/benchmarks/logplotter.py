@@ -85,7 +85,7 @@ user_c_ratio = []
 kernel_c_ratio = []
 for k, v in intel_InstrMix.logVals['4096 keys'].items():
     if "conncetions" in k:
-        appendIfNotInlist(connections, k)
+        appendIfNotInlist(connections, k.split()[0])
         kernel_i = v['instructions:k']
         user_i = v['instructions:u']
         kernel_c = v['cycles:k']
@@ -232,7 +232,6 @@ for k, v in intel_L1icache.logVals.items():
         for i, j in v.items():
             if(type(j) is dict):
                 appendIfNotInlist(connections, i.split()[0])
-                connections.append(i.split()[0]) # Just grab the number
                 hits = j['icache.hit']
                 misses = j['L1-icache-load-misses']
                 total = hits + misses
