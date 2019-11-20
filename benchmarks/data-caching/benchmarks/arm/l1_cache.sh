@@ -1,5 +1,5 @@
 #!/bin/bash
-export PERF_ARGS="-e armv8_pmuv3_0/l1i_cache_refill/,instructions"
+export PERF_ARGS="-e armv8_pmuv3_0/l1i_cache_refill/,armv8_pmuv3_0/l1i_cache/,instructions"
 export SERVER_ARGS="-t 1 -m 4096 -n 550"
 
 for i in 64 4096; do
