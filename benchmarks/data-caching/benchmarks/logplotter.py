@@ -67,7 +67,7 @@ def appendIfNotInlist(l, v):
 # Intel x86 system 1    : x
 # Intel x86 system 2    : 
 # Arm Cavium            : N/A                   No kernel instructions in logs
-# Amazon EC2 A1         : 
+# Amazon EC2 A1         : x
 
 # @todo: We need to compare this with total instruction count, to see how the
 # ratios change wrt. total instructions
@@ -77,15 +77,20 @@ intel_InstrMix = Benchmark(
     ["instructions:k", "cycles:k", "instructions:u", "cycles:u"])
 intel_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.intel.log")
 
+arm_amazon_InstrMix = Benchmark(
+    "Instructions Stack",
+    ["instructions:k", "cycles:k", "instructions:u", "cycles:u"])
+arm_amazon_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.arm.amazon.log")
+
 ############################### Data Extraction ################################
-connections = []
-user_i_ratio = []
-kernel_i_ratio = []
-user_c_ratio = []
-kernel_c_ratio = []
+x86_connections = []
+x86_user_i_ratio = []
+x86_kernel_i_ratio = []
+x86_user_c_ratio = []
+x86_kernel_c_ratio = []
 for k, v in intel_InstrMix.logVals['4096 keys'].items():
     if "conncetions" in k:
-        appendIfNotInlist(connections, k.split()[0])
+        appendIfNotInlist(x86_connections, k.split()[0])
         kernel_i = v['instructions:k']
         user_i = v['instructions:u']
         kernel_c = v['cycles:k']
@@ -93,48 +98,70 @@ for k, v in intel_InstrMix.logVals['4096 keys'].items():
         i_tot = kernel_i + user_i
         c_tot = kernel_c + user_c
 
-        user_i_ratio.append((user_i / i_tot) * 100)
-        kernel_i_ratio.append((kernel_i / i_tot) * 100)
-        user_c_ratio.append((user_c / c_tot) * 100)
-        kernel_c_ratio.append((kernel_c / c_tot) * 100)
+        x86_user_i_ratio.append((user_i / i_tot) * 100)
+        x86_kernel_i_ratio.append((kernel_i / i_tot) * 100)
+        x86_user_c_ratio.append((user_c / c_tot) * 100)
+        x86_kernel_c_ratio.append((kernel_c / c_tot) * 100)
+
+arm_amazon_connections = []
+arm_amazon_user_i_ratio = []
+arm_amazon_kernel_i_ratio = []
+arm_amazon_user_c_ratio = []
+arm_amazon_kernel_c_ratio = []
+for k, v in arm_amazon_InstrMix.logVals['4096 keys'].items():
+    if "conncetions" in k:
+        appendIfNotInlist(arm_amazon_connections, k.split()[0])
+        kernel_i = v['instructions:k']
+        user_i = v['instructions:u']
+        kernel_c = v['cycles:k']
+        user_c = v['cycles:u']
+        i_tot = kernel_i + user_i
+        c_tot = kernel_c + user_c
+
+        arm_amazon_user_i_ratio.append((user_i / i_tot) * 100)
+        arm_amazon_kernel_i_ratio.append((kernel_i / i_tot) * 100)
+        arm_amazon_user_c_ratio.append((user_c / c_tot) * 100)
+        arm_amazon_kernel_c_ratio.append((kernel_c / c_tot) * 100)
 
 ################################### Plotting ###################################
-plt.subplot(2,2,1)
-plt.title("User versus Kernel instruction mix")
-plt.plot(user_i_ratio, label="User, Intel")
-plt.ylabel("User instr / Instr tot [%]")
-plt.legend()
-plt.twinx()
-plt.plot(kernel_i_ratio, label="Kernel, Intel", color="orange")
+plt.subplot(1,1,1)
+plt.title("Kernel instructions ratio")
+plt.plot(x86_kernel_i_ratio, label="User, Intel")
+plt.plot(arm_amazon_kernel_i_ratio, label="User, ARM (Amazon)")
 plt.ylabel("Kernel instr / Instr tot [%]")
-plt.xticks(range(len(connections)), connections)
+plt.legend()
+# plt.twinx()
+# plt.plot(x86_kernel_i_ratio, label="Kernel, Intel", color="orange")
+# plt.plot(arm_amazon_kernel_i_ratio, label="Kernel, ARM (Amazon)", color="orange")
+#plt.ylabel("Kernel instr / Instr tot [%]")
+plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections)
 plt.xlabel("Keys")
 plt.legend()
 
-# Ratio stackplot
-plt.subplot(2,2,2)
-plt.stackplot(range(len(user_i_ratio)), user_i_ratio, kernel_i_ratio, labels=["User", "Kernel"])
-plt.ylabel("Instructions")
-plt.legend()
+## Ratio stackplot
+#plt.subplot(2,2,2)
+#plt.stackplot(range(len(user_i_ratio)), x86_user_i_ratio, x86_kernel_i_ratio, labels=["User", "Kernel"])
+#plt.ylabel("Instructions")
+#plt.legend()
+#
+#plt.xticks(range(len(connections)), connections)
+#plt.xlabel("Keys")
+#plt.legend()
 
-plt.xticks(range(len(connections)), connections)
-plt.xlabel("Keys")
-plt.legend()
-
-# Cycle ratio
-plt.subplot(2,2,3)
-plt.plot(user_c_ratio, label="User, Intel")
-plt.ylabel("User cycles per total cycles [%]")
-plt.legend()
-plt.twinx()
-plt.plot(kernel_c_ratio, label="Kernel, Intel", color="orange")
-plt.xticks(range(len(connections)), connections)
-plt.ylabel("Kernel cycles per total cycles [%]")
-plt.xlabel("Keys")
-plt.legend()
+## Cycle ratio
+#plt.subplot(2,2,3)
+#plt.plot(x86_user_c_ratio, label="User, Intel")
+#plt.plot(arm_amazon_user_c_ratio, label="User, ARM (Amazon)")
+#plt.ylabel("User cycles per total cycles [%]")
+#plt.legend()
+#plt.twinx()
+#plt.plot(x86_kernel_c_ratio, label="Kernel, Intel", color="orange")
+#plt.plot(arm_amazon_kernel_c_ratio, label="Kernel, ARM (Amazon)", color="orange")
+#plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections)
+#plt.ylabel("Kernel cycles per total cycles [%]")
+#plt.xlabel("Keys")
+#plt.legend()
 plt.show()
-
-
 
 
 
@@ -155,6 +182,10 @@ arm_cavium_branchPredictor = Benchmark(
     ["armv8_pmuv3_0/br_mis_pred/:u", "armv8_pmuv3_0/br_pred/:u", "instructions:u"])
 arm_cavium_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.arm.cavium.log")
 
+arm_amazon_branchPredictor = Benchmark(
+    "Branch predictor",
+    ["armv8_pmuv3_0/br_mis_pred/", "armv8_pmuv3_0/br_pred/", "instructions"])
+arm_amazon_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.arm.amazon.log")
 
 ############################### Data Extraction ################################
 # 4096 keys, varying connections
@@ -184,12 +215,27 @@ for k, v in arm_cavium_branchPredictor.logVals['4096 keys'].items():
         arm_cavium_br_miss.append(missRatio)
         arm_cavium_br_mix.append(brRatio)
 
+arm_amazon_br_miss = []
+arm_amazon_br_mix = []
+for k, v in arm_amazon_branchPredictor.logVals['4096 keys'].items():
+    if "conncetions" in k:
+        appendIfNotInlist(connections, k)
+        miss = v['armv8_pmuv3_0/br_mis_pred/']
+        predict = v['armv8_pmuv3_0/br_pred/']
+        total = miss + predict
+        missRatio = (miss / total) * 100 
+        brRatio = (total / v['instructions']) * 100
+        arm_amazon_br_miss.append(missRatio)
+        arm_amazon_br_mix.append(brRatio)
+
+
 # Just show the number of connections (Format of key is: "# connections")
 connections = [x.split(' ')[0] for x in connections]
 
 ################################### Plotting ###################################
 plt.plot(x86_br_miss, label="x86")
 plt.plot(arm_cavium_br_miss, label="ARM (Cavium)")
+plt.plot(arm_amazon_br_miss, label="ARM (Amazon)")
 plt.title("Branch misses & branch instructions")
 plt.xticks(range(len(connections)), connections)
 plt.ylabel("Branch misses per branch instruction [%]")
@@ -200,6 +246,7 @@ plt.legend()
 plt.subplot(2,1,2)
 plt.plot(x86_br_mix, label="x86")
 plt.plot(arm_cavium_br_mix, label="ARM (Cavium)")
+plt.plot(arm_amazon_br_mix, label="ARM (Amazon)")
 plt.xticks(range(len(connections)), connections)
 plt.ylabel("Branch instructions per instruction [%]")
 plt.xlabel("Connections")
@@ -214,8 +261,8 @@ plt.show()
 # L1I Cache
 # Intel x86 system 1    : x
 # Intel x86 system 2    : 
-# Arm Cavium            : N/A                                   Needs a rerun
-# Amazon EC2 A1         : 
+# Arm Cavium            : N/A                                   Needs a rerun, didn't have total L1I cache accesses
+# Amazon EC2 A1         : N/A                                   Needs a rerun, didn't have total L1I cache accesses
 ################################################################################
 intel_L1icache = Benchmark(
     "L1 cache",
@@ -267,6 +314,12 @@ arm_cavium_L1dcache = Benchmark(
     ["L1-dcache-load-misses:u", "L1-dcache-loads:u", "instructions"])
 arm_cavium_L1dcache.decodeLog(LOGDIR + "l1d_cache.sh.arm.cavium.log")
 
+arm_amazon_L1dcache = Benchmark(
+    "L1D cache",
+    ["L1-dcache-load-misses", "L1-dcache-loads", "instructions"])
+arm_amazon_L1dcache.decodeLog(LOGDIR + "l1d_cache.sh.arm.amazon.log")
+
+
 keys = []
 connections = []
 
@@ -289,6 +342,25 @@ for k, v in arm_cavium_L1dcache.logVals.items():
                 appendIfNotInlist(connections, i.split()[0])
                 arm_cavium_l1d_hitrate_4096_connections.append(hitratio)
                 hitratio = (1 - (j['L1-dcache-load-misses:u'] / j['L1-dcache-loads:u'])) * 100 
+
+# Arm amazon
+arm_amazon_l1d_hitrate_varyingkeys = []
+arm_amazon_l1d_hitrate_4096_connections = []
+for k, v in arm_amazon_L1dcache.logVals.items():
+    if "keys" in k:
+        # Varying keys
+        appendIfNotInlist(keys, k.split()[0])
+        hitratio = (1 - (v['L1-dcache-load-misses'] / v['L1-dcache-loads'])) * 100 
+        arm_amazon_l1d_hitrate_varyingkeys.append(hitratio)
+    
+    if k == '4096 keys':
+        # Varying connections, stored as nested dictionaries
+        for i, j in v.items():
+            if(type(j) is dict):
+                appendIfNotInlist(connections, i.split()[0])
+                arm_amazon_l1d_hitrate_4096_connections.append(hitratio)
+                hitratio = (1 - (j['L1-dcache-load-misses'] / j['L1-dcache-loads'])) * 100 
+
 
 # x86
 x86_l1d_hitrate_varyingkeys = []
@@ -314,6 +386,7 @@ plt.subplot(2,1,1)
 plt.title("L1D Properties with varying key and connection count")
 plt.plot(x86_l1d_hitrate_varyingkeys, label="x86")
 plt.plot(arm_cavium_l1d_hitrate_varyingkeys, label="ARM (Cavium)")
+plt.plot(arm_amazon_l1d_hitrate_varyingkeys, label="ARM (amazon)")
 plt.xticks(range(len(keys)), keys)
 plt.ylabel("L1D Hit Ratio [%]")
 plt.xlabel("Keys")
@@ -323,6 +396,7 @@ plt.legend()
 plt.subplot(2,1,2)
 plt.plot(x86_l1d_hitrate_4096_connections, label="x86")
 plt.plot(arm_cavium_l1d_hitrate_4096_connections, label="ARM (Cavium)")
+plt.plot(arm_amazon_l1d_hitrate_4096_connections, label="ARM (Amazon)")
 plt.xticks(range(len(connections)), connections)
 plt.ylabel("L1D Hit Ratio [%]")
 plt.xlabel("Connections")
@@ -396,7 +470,7 @@ plt.show()
 # Intel x86 system 1    : x
 # Intel x86 system 2    : 
 # Arm Cavium            : N/A                   No performance counters for LLC
-# Amazon EC2 A1         : 
+# Amazon EC2 A1         : N/A                   No performance counters for LLC
 ################################################################################
 intel_LLCcache = Benchmark(
     "LLC cache",
