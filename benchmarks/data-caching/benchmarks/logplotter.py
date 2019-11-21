@@ -1,9 +1,18 @@
 import matplotlib
 import matplotlib.pyplot as plt
-import pprint
+import os
 
+################################################################################
+#                               Configuration                                  #
+################################################################################
+
+SHOW_PLOTS = False
 LOGDIR = "logs/"
+OUTDIR = "plots/"
+if not os.path.exists(OUTDIR):
+    os.makedirs(OUTDIR)
 
+################################################################################
 class Benchmark:
     def __init__(self, key, values):
         self.key = key
@@ -52,9 +61,6 @@ class Benchmark:
                         seg = seg.strip()
                         segmentKeys.append(seg)
                     inSegment = True
-
-
-pp = pprint.PrettyPrinter(indent=4)
 
 
 def appendIfNotInlist(l, v):
@@ -124,19 +130,24 @@ for k, v in arm_amazon_InstrMix.logVals['4096 keys'].items():
         arm_amazon_kernel_c_ratio.append((kernel_c / c_tot) * 100)
 
 ################################### Plotting ###################################
-plt.subplot(1,1,1)
-plt.title("Kernel vs. Total Instruction Ratio @ 4096 Keys, Varying Connections")
-plt.plot(x86_kernel_i_ratio, label="User, Intel")
-plt.plot(arm_amazon_kernel_i_ratio, label="User, ARM (Amazon)")
+plt.figure()
+title = "Kernel vs. Total Instruction Ratio @ 4096 Keys, Varying Connections"
+plt.plot(x86_kernel_i_ratio, label="User, Intel (Xeon)")
+plt.plot(arm_amazon_kernel_i_ratio, label="User, ARM (Graviton)")
 plt.ylabel("[%]")
 plt.legend()
 # plt.twinx()
 # plt.plot(x86_kernel_i_ratio, label="Kernel, Intel", color="orange")
-# plt.plot(arm_amazon_kernel_i_ratio, label="Kernel, ARM (Amazon)", color="orange")
+# plt.plot(arm_amazon_kernel_i_ratio, label="Kernel, ARM (Graviton)", color="orange")
 #plt.ylabel("Kernel instr / Instr tot [%]")
-plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections)
+plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections, rotation=20)
 plt.xlabel("Connections")
 plt.legend()
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 ## Ratio stackplot
 #plt.subplot(2,2,2)
@@ -151,17 +162,16 @@ plt.legend()
 ## Cycle ratio
 #plt.subplot(2,2,3)
 #plt.plot(x86_user_c_ratio, label="User, Intel")
-#plt.plot(arm_amazon_user_c_ratio, label="User, ARM (Amazon)")
+#plt.plot(arm_amazon_user_c_ratio, label="User, ARM (Graviton)")
 #plt.ylabel("User cycles per total cycles [%]")
 #plt.legend()
 #plt.twinx()
 #plt.plot(x86_kernel_c_ratio, label="Kernel, Intel", color="orange")
-#plt.plot(arm_amazon_kernel_c_ratio, label="Kernel, ARM (Amazon)", color="orange")
+#plt.plot(arm_amazon_kernel_c_ratio, label="Kernel, ARM (Graviton)", color="orange")
 #plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections)
 #plt.ylabel("Kernel cycles per total cycles [%]")
 #plt.xlabel("Keys")
 #plt.legend()
-plt.show()
 
 
 
@@ -191,17 +201,17 @@ arm_amazon_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.arm.amazon.lo
 # 4096 keys, varying connections
 # Branch misses
 connections = []
-x86_br_miss = []
+x86_br_hit = []
 x86_br_mix = []
 for k, v in intel_branchPredictor.logVals['4096 keys'].items():
     if "conncetions" in k:
         appendIfNotInlist(connections, k)
-        missRatio = (v['branch-misses'] / v['branch-instructions']) * 100 
+        missRatio = (1 - v['branch-misses'] / v['branch-instructions']) * 100 
         brRatio = (v['branch-instructions'] / v['instructions']) * 100
-        x86_br_miss.append(missRatio)
+        x86_br_hit.append(missRatio)
         x86_br_mix.append(brRatio)
 
-arm_cavium_br_miss = []
+arm_cavium_br_hit = []
 arm_cavium_br_mix = []
 for k, v in arm_cavium_branchPredictor.logVals['4096 keys'].items():
     if "conncetions" in k:
@@ -209,12 +219,12 @@ for k, v in arm_cavium_branchPredictor.logVals['4096 keys'].items():
         miss = v['armv8_pmuv3_0/br_mis_pred/:u']
         predict = v['armv8_pmuv3_0/br_pred/:u']
         total = miss + predict
-        missRatio = (miss / total) * 100 
+        missRatio = (1 - miss / total) * 100 
         brRatio = (total / v['instructions:u']) * 100
-        arm_cavium_br_miss.append(missRatio)
+        arm_cavium_br_hit.append(missRatio)
         arm_cavium_br_mix.append(brRatio)
 
-arm_amazon_br_miss = []
+arm_amazon_br_hit = []
 arm_amazon_br_mix = []
 for k, v in arm_amazon_branchPredictor.logVals['4096 keys'].items():
     if "conncetions" in k:
@@ -222,9 +232,9 @@ for k, v in arm_amazon_branchPredictor.logVals['4096 keys'].items():
         miss = v['armv8_pmuv3_0/br_mis_pred/']
         predict = v['armv8_pmuv3_0/br_pred/']
         total = miss + predict
-        missRatio = (miss / total) * 100 
+        missRatio = (1 - miss / total) * 100 
         brRatio = (total / v['instructions']) * 100
-        arm_amazon_br_miss.append(missRatio)
+        arm_amazon_br_hit.append(missRatio)
         arm_amazon_br_mix.append(brRatio)
 
 
@@ -232,27 +242,36 @@ for k, v in arm_amazon_branchPredictor.logVals['4096 keys'].items():
 connections = [x.split(' ')[0] for x in connections]
 
 ################################### Plotting ###################################
-plt.subplot(1,2,1)
-plt.plot(x86_br_miss, label="x86")
-plt.plot(arm_cavium_br_miss, label="ARM (Cavium)")
-plt.plot(arm_amazon_br_miss, label="ARM (Amazon)")
-plt.title("Branch misses per branch instruction")
-plt.xticks(range(len(connections)), connections)
+plt.figure()
+plt.plot(x86_br_hit, label="x86 (Xeon)")
+plt.plot(arm_cavium_br_hit, label="ARM (Cavium)")
+plt.plot(arm_amazon_br_hit, label="ARM (Graviton)")
+plt.xticks(range(len(connections)), connections, rotation=20)
 plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
+title = "Branch Hit Rate"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 # Branch instruction mix
-plt.subplot(1,2,2)
-plt.plot(x86_br_mix, label="x86")
+plt.figure()
+plt.plot(x86_br_mix, label="x86 (Xeon)")
 plt.plot(arm_cavium_br_mix, label="ARM (Cavium)")
-plt.plot(arm_amazon_br_mix, label="ARM (Amazon)")
-plt.xticks(range(len(connections)), connections)
-plt.title("Branch instructions per instruction")
+plt.plot(arm_amazon_br_mix, label="ARM (Graviton)")
+plt.xticks(range(len(connections)), connections,rotation=20)
 plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
-plt.show()
+title = "Branch Instruction Density"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 
 
@@ -269,7 +288,6 @@ intel_L1icache = Benchmark(
     "L1 cache",
     ["L1-icache-load-misses", "icache.hit", "instructions"])
 intel_L1icache.decodeLog(LOGDIR + "l1_cache.sh.intel.log")
-pp.pprint(intel_L1icache.logVals)
 
 ############################### Data Extraction ################################
 connections = []
@@ -288,15 +306,19 @@ for k, v in intel_L1icache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying connections
-plt.subplot(1,1,1)
-plt.plot(hitrate, label="x86")
-plt.xticks(range(len(connections)), connections)
-plt.title("L1I Cache")
+plt.figure()
+plt.plot(hitrate, label="x86 (Xeon)")
+plt.xticks(range(len(connections)), connections, rotation=20)
+plt.title(title)
 plt.ylabel("L1I Hit Ratio [%]")
 plt.xlabel("Connections")
 plt.legend()
-
-plt.show()
+title = "L1I Cache"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 ################################################################################
 # L1D Cache
@@ -383,28 +405,36 @@ for k, v in intel_L1dcache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying key size
-plt.subplot(1,2,1)
-plt.title("L1D Properties with varying key and connection count")
-plt.plot(x86_l1d_hitrate_varyingkeys, label="x86")
+plt.figure()
+plt.plot(x86_l1d_hitrate_varyingkeys, label="x86 (Xeon)")
 plt.plot(arm_cavium_l1d_hitrate_varyingkeys, label="ARM (Cavium)")
-plt.plot(arm_amazon_l1d_hitrate_varyingkeys, label="ARM (amazon)")
+plt.plot(arm_amazon_l1d_hitrate_varyingkeys, label="ARM (Graviton)")
 plt.xticks(range(len(keys)), keys, rotation=20)
 plt.title("L1D Hit Ratio With Varying Keys")
 plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
+title = "L1D Properties with varying key and connection count"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 # Varying connections
-plt.subplot(1,2,2)
-plt.plot(x86_l1d_hitrate_4096_connections, label="x86")
+plt.figure()
+plt.plot(x86_l1d_hitrate_4096_connections, label="x86 (Xeon)")
 plt.plot(arm_cavium_l1d_hitrate_4096_connections, label="ARM (Cavium)")
-plt.plot(arm_amazon_l1d_hitrate_4096_connections, label="ARM (Amazon)")
+plt.plot(arm_amazon_l1d_hitrate_4096_connections, label="ARM (Graviton)")
 plt.xticks(range(len(connections)), connections, rotation=20)
-plt.title("L1D Hit Ratio @ 4096 Keys, Varying Connections")
 plt.xlabel("Connections")
 plt.legend()
-
-plt.show()
+title = "L1D Hit Ratio @ 4096 Keys, Varying Connections"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 
 
@@ -445,26 +475,33 @@ for k, v in arm_cavium_L2dcache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying key size
-plt.subplot(1,2,1)
-plt.title("L2D Refill ratio")
+plt.figure()
 plt.plot(arm_cavium_refillRatio_var_keys, label="Arm (Cavium)")
-plt.xticks(range(len(keys)), keys)
+plt.xticks(range(len(keys)), keys, rotation=20)
 plt.title("L2D Refill Ratio With Varying Keys")
 plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
+title = "L2D Refill ratio"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 # Varying connections
-plt.subplot(1,2,2)
+plt.figure()
 plt.plot(arm_cavium_refillRatio_var_conn, label="Arm (Cavium)")
-plt.xticks(range(len(connections)), connections)
-plt.title("L2D Refill Ratio With @ 4096 Keys, Varying Connections")
+plt.xticks(range(len(connections)), connections, rotation=20)
 plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
-
-plt.show()
-
+title = "L2D Refill Ratio @ 4096 Keys, Varying Connections"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 
 
@@ -480,8 +517,6 @@ intel_LLCcache = Benchmark(
     "LLC cache",
     ["LLC-loads", "LLC-load-misses"])
 intel_LLCcache.decodeLog(LOGDIR + "llc.sh.intel.log")
-pp.pprint(intel_LLCcache.logVals)
-
 
 ############################### Data Extraction ################################
 keys = []
@@ -506,21 +541,29 @@ for k, v in intel_LLCcache.logVals.items():
 
 ################################### Plotting ###################################
 # Varying key size
-plt.subplot(1,2,1)
-plt.plot(VarKeysHitRatio, label="x86")
-plt.xticks(range(len(keys)), keys)
-plt.title("LLC Hit Ratio With Varying Keys")
+plt.figure()
+plt.plot(VarKeysHitRatio, label="x86 (Xeon)")
+plt.xticks(range(len(keys)), keys, rotation = 20)
 plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
+title = "LLC Hit Ratio With Varying Key Size"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
 
 # Varying connections
-plt.subplot(1,2,2)
-plt.plot(VarConnHitRatio, label="x86")
-plt.xticks(range(len(connections)), connections)
-plt.title("LLC Hit Ratio @ 4096 Keys, Varying Connections")
+plt.figure()
+plt.plot(VarConnHitRatio, label="x86 (Xeon)")
+plt.xticks(range(len(connections)), connections,rotation=20)
 plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
-
-plt.show()
+title = "LLC Hit Ratio @ 4096 Keys, Varying Connections"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
