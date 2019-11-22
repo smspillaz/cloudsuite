@@ -1,5 +1,5 @@
 #!/bin/bash
-export PERF_ARGS="-e instructions:k,cycles:k,instructions:u,cycles:u"
+export PERF_ARGS="-e instructions:k,cycles:k,instructions:u,cycles:u,instructions,cycles"
 export SERVER_ARGS="-t 1 -m 4096 -n 550"
 
 for i in 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384; do
