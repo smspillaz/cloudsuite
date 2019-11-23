@@ -6,7 +6,7 @@ import os
 #                               Configuration                                  #
 ################################################################################
 
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 LOGDIR = "logs/"
 OUTDIR = "plots/"
 if not os.path.exists(OUTDIR):
@@ -68,32 +68,33 @@ def appendIfNotInlist(l, v):
         l.append(v)
 
 ################################################################################
-# User/Kernel instructions & Cycles
+# User/Kernel instructions, cycles, Dynamic instruction count
 
 # Intel x86 system 1    : x
 # Intel x86 system 2    : 
-# Arm Cavium            : N/A                   No kernel instructions in logs
+# Arm Cavium            : N/A                   Cannot count kernel nor total instructions
 # Amazon EC2 A1         : x
 
-# @todo: We need to compare this with total instruction count, to see how the
-# ratios change wrt. total instructions
 ################################################################################
 intel_InstrMix = Benchmark(
     "Instructions Stack",
-    ["instructions:k", "cycles:k", "instructions:u", "cycles:u"])
-intel_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.intel.log")
+    ["instructions:k", "cycles:k", "instructions:u", "cycles:u", "instructions"])
+intel_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.intel.xeon.log")
 
 arm_amazon_InstrMix = Benchmark(
     "Instructions Stack",
-    ["instructions:k", "cycles:k", "instructions:u", "cycles:u"])
+    ["instructions:k", "cycles:k", "instructions:u", "cycles:u", "instructions"])
 arm_amazon_InstrMix.decodeLog(LOGDIR + "instructions-stack.sh.arm.amazon.log")
 
 ############################### Data Extraction ################################
+connections = []
+
 x86_connections = []
 x86_user_i_ratio = []
 x86_kernel_i_ratio = []
 x86_user_c_ratio = []
 x86_kernel_c_ratio = []
+x86_instr = []
 for k, v in intel_InstrMix.logVals['4096 keys'].items():
     if "conncetions" in k:
         appendIfNotInlist(x86_connections, k.split()[0])
@@ -103,6 +104,7 @@ for k, v in intel_InstrMix.logVals['4096 keys'].items():
         user_c = v['cycles:u']
         i_tot = kernel_i + user_i
         c_tot = kernel_c + user_c
+        x86_instr.append(i_tot)
 
         x86_user_i_ratio.append((user_i / i_tot) * 100)
         x86_kernel_i_ratio.append((kernel_i / i_tot) * 100)
@@ -114,6 +116,8 @@ arm_amazon_user_i_ratio = []
 arm_amazon_kernel_i_ratio = []
 arm_amazon_user_c_ratio = []
 arm_amazon_kernel_c_ratio = []
+arm_amazon_instr = []
+
 for k, v in arm_amazon_InstrMix.logVals['4096 keys'].items():
     if "conncetions" in k:
         appendIfNotInlist(arm_amazon_connections, k.split()[0])
@@ -121,6 +125,7 @@ for k, v in arm_amazon_InstrMix.logVals['4096 keys'].items():
         user_i = v['instructions:u']
         kernel_c = v['cycles:k']
         user_c = v['cycles:u']
+        arm_amazon_instr.append(v['instructions'])
         i_tot = kernel_i + user_i
         c_tot = kernel_c + user_c
 
@@ -143,6 +148,20 @@ plt.legend()
 plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections, rotation=20)
 plt.xlabel("Connections")
 plt.legend()
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
+
+plt.figure()
+plt.plot(x86_instr, label="x86 (Xeon)")
+plt.plot(arm_amazon_instr, label="ARM (Graviton)")
+plt.xticks(range(len(arm_amazon_connections)), arm_amazon_connections, rotation=20)
+plt.ylabel("[%]")
+plt.xlabel("Connections")
+plt.legend()
+title = "Dynamic Instruction Count"
 plt.title(title)
 plt.tight_layout()
 plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
@@ -185,7 +204,7 @@ if SHOW_PLOTS:
 intel_branchPredictor = Benchmark(
     "Branch predictor",
     ["branch-misses", "branch-instructions", "instructions"])
-intel_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.intel.log")
+intel_branchPredictor.decodeLog(LOGDIR + "branch_predictor.sh.intel.xeon.log")
 
 arm_cavium_branchPredictor = Benchmark(
     "Branch predictor",
@@ -281,18 +300,38 @@ if SHOW_PLOTS:
 # L1I Cache
 # Intel x86 system 1    : x
 # Intel x86 system 2    : 
-# Arm Cavium            : N/A                                   Needs a rerun, didn't have total L1I cache accesses
-# Amazon EC2 A1         : N/A                                   Needs a rerun, didn't have total L1I cache accesses
+# Arm Cavium            : x
+# Amazon EC2 A1         : x
 ################################################################################
 intel_L1icache = Benchmark(
     "L1 cache",
     ["L1-icache-load-misses", "icache.hit", "instructions"])
-intel_L1icache.decodeLog(LOGDIR + "l1_cache.sh.intel.log")
+intel_L1icache.decodeLog(LOGDIR + "l1i_cache.sh.intel.xeon.log")
+
+arm_cavium_L1icache = Benchmark(
+    "L1I cache",
+    ["armv8_pmuv3_0/l1i_cache_refill/:u", "armv8_pmuv3_0/l1i_cache/:u", "instructions:u"])
+arm_cavium_L1icache.decodeLog(LOGDIR + "l1i_cache.sh.arm.cavium.log")
+
+arm_amazon_L1icache = Benchmark(
+    "L1I cache",
+    ["armv8_pmuv3_0/l1i_cache_refill/", "armv8_pmuv3_0/l1i_cache/", "instructions"])
+arm_amazon_L1icache.decodeLog(LOGDIR + "l1i_cache.sh.arm.amazon.log")
 
 ############################### Data Extraction ################################
 connections = []
-hitrate = []
+keys = []
+x86_xeon_hitrate_varkeys = []
+x86_xeon_hitrate_varconn = []
 for k, v in intel_L1icache.logVals.items():
+    if "keys" in k:
+        # Varying keys
+        appendIfNotInlist(keys, k.split()[0])
+        hits = v['icache.hit']
+        misses = v['L1-icache-load-misses']
+        total = hits + misses
+        hitRatio = (hits / total) * 100 
+        x86_xeon_hitrate_varkeys.append(hitRatio)
     if k == '4096 keys':
         # Varying connections, stored as nested dictionaries
         for i, j in v.items():
@@ -302,12 +341,66 @@ for k, v in intel_L1icache.logVals.items():
                 misses = j['L1-icache-load-misses']
                 total = hits + misses
                 hitRatio = (hits / total) * 100 
-                hitrate.append(hitRatio)
+                x86_xeon_hitrate_varconn.append(hitRatio)
+
+arm_cavium_hitrate_varkeys = []
+arm_cavium_hitrate_varconn = []
+for k, v in arm_cavium_L1icache.logVals.items():
+    if "keys" in k:
+        # Varying keys
+        appendIfNotInlist(keys, k.split()[0])
+        ratio = (1 - (v['armv8_pmuv3_0/l1i_cache_refill/:u'] / v['armv8_pmuv3_0/l1i_cache/:u'])) * 100 
+        arm_cavium_hitrate_varkeys.append(ratio)
+    
+    if k == '4096 keys':
+        # Varying connections, stored as nested dictionaries
+        for i, j in v.items():
+            if(type(j) is dict):
+                appendIfNotInlist(connections, i.split()[0])
+                ratio = (1 - (j['armv8_pmuv3_0/l1i_cache_refill/:u'] / j['armv8_pmuv3_0/l1i_cache/:u'])) * 100 
+                arm_cavium_hitrate_varconn.append(ratio)
+
+arm_amazon_hitrate_varkeys = []
+arm_amazon_hitrate_varconn = []
+for k, v in arm_amazon_L1icache.logVals.items():
+    if "keys" in k:
+        # Varying keys
+        appendIfNotInlist(keys, k.split()[0])
+        ratio = (1 - (v['armv8_pmuv3_0/l1i_cache_refill/'] / v['armv8_pmuv3_0/l1i_cache/'])) * 100 
+        arm_amazon_hitrate_varkeys.append(ratio)
+    
+    if k == '4096 keys':
+        # Varying connections, stored as nested dictionaries
+        for i, j in v.items():
+            if(type(j) is dict):
+                appendIfNotInlist(connections, i.split()[0])
+                ratio = (1 - (j['armv8_pmuv3_0/l1i_cache_refill/'] / j['armv8_pmuv3_0/l1i_cache/'])) * 100 
+                arm_amazon_hitrate_varconn.append(ratio)
 
 ################################### Plotting ###################################
+
+# Varying keys
+plt.figure()
+plt.plot(x86_xeon_hitrate_varkeys, label="x86 (Xeon)")
+plt.plot(arm_amazon_hitrate_varkeys, label="x86 (Amazon)")
+plt.plot(arm_cavium_hitrate_varkeys, label="x86 (Cavium)")
+plt.xticks(range(len(connections)), connections, rotation=20)
+plt.title(title)
+plt.ylabel("L1I Hit Ratio [%]")
+plt.xlabel("Connections")
+plt.legend()
+title = "L1I Cache"
+plt.title(title)
+plt.tight_layout()
+plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
+if SHOW_PLOTS:
+    plt.show()
+
 # Varying connections
 plt.figure()
-plt.plot(hitrate, label="x86 (Xeon)")
+plt.plot(x86_xeon_hitrate_varconn, label="x86 (Xeon)")
+plt.plot(arm_amazon_hitrate_varconn, label="x86 (Amazon)")
+plt.plot(arm_cavium_hitrate_varconn, label="x86 (Cavium)")
 plt.xticks(range(len(connections)), connections, rotation=20)
 plt.title(title)
 plt.ylabel("L1I Hit Ratio [%]")
@@ -330,7 +423,7 @@ if SHOW_PLOTS:
 intel_L1dcache = Benchmark(
     "L1D cache",
     ["L1-dcache-load-misses", "L1-dcache-loads", "instructions"])
-intel_L1dcache.decodeLog(LOGDIR + "l1d_cache.sh.intel.log")
+intel_L1dcache.decodeLog(LOGDIR + "l1d_cache.sh.intel.xeon.log")
 
 arm_cavium_L1dcache = Benchmark(
     "L1D cache",
@@ -410,11 +503,11 @@ plt.plot(x86_l1d_hitrate_varyingkeys, label="x86 (Xeon)")
 plt.plot(arm_cavium_l1d_hitrate_varyingkeys, label="ARM (Cavium)")
 plt.plot(arm_amazon_l1d_hitrate_varyingkeys, label="ARM (Graviton)")
 plt.xticks(range(len(keys)), keys, rotation=20)
-plt.title("L1D Hit Ratio With Varying Keys")
+plt.title("L1D Hit Rate With Varying Keys")
 plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
-title = "L1D Properties with varying key and connection count"
+title = "L1D Hit Rate with varying key and connection count"
 plt.title(title)
 plt.tight_layout()
 plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
@@ -428,8 +521,9 @@ plt.plot(arm_cavium_l1d_hitrate_4096_connections, label="ARM (Cavium)")
 plt.plot(arm_amazon_l1d_hitrate_4096_connections, label="ARM (Graviton)")
 plt.xticks(range(len(connections)), connections, rotation=20)
 plt.xlabel("Connections")
+plt.ylabel("[%]")
 plt.legend()
-title = "L1D Hit Ratio @ 4096 Keys, Varying Connections"
+title = "L1D Hit Rate @ 4096 Keys, Varying Connections"
 plt.title(title)
 plt.tight_layout()
 plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
@@ -445,13 +539,18 @@ if SHOW_PLOTS:
 # Intel x86 system 1    : 
 # Intel x86 system 2    : 
 # Arm Cavium            : x
-# Amazon EC2 A1         : 
+# Amazon EC2 A1         : x
 ################################################################################
 
 arm_cavium_L2dcache = Benchmark(
     "L2D cache",
     ["armv8_pmuv3_0/l2d_cache/:u", "armv8_pmuv3_0/l2d_cache_refill/:u", "instructions"])
 arm_cavium_L2dcache.decodeLog(LOGDIR + "l2d_cache.sh.arm.cavium.log")
+
+arm_amazon_L2dcache = Benchmark(
+    "L2D cache",
+    ["armv8_pmuv3_0/l2d_cache/", "armv8_pmuv3_0/l2d_cache_refill/", "instructions"])
+arm_amazon_L2dcache.decodeLog(LOGDIR + "l2d_cache.sh.arm.amazon.log")
 
 ############################### Data Extraction ################################
 keys = []
@@ -473,16 +572,34 @@ for k, v in arm_cavium_L2dcache.logVals.items():
                 ratio = (1 - (j['armv8_pmuv3_0/l2d_cache_refill/:u'] / j['armv8_pmuv3_0/l2d_cache/:u'])) * 100 
                 arm_cavium_refillRatio_var_conn.append(ratio)
 
+arm_amazon_refillRatio_var_keys = []
+arm_amazon_refillRatio_var_conn = []
+for k, v in arm_amazon_L2dcache.logVals.items():
+    if "keys" in k:
+        # Varying keys
+        appendIfNotInlist(keys, k.split()[0])
+        ratio = (1 - (v['armv8_pmuv3_0/l2d_cache_refill/'] / v['armv8_pmuv3_0/l2d_cache/'])) * 100 
+        arm_amazon_refillRatio_var_keys.append(ratio)
+    
+    if k == '4096 keys':
+        # Varying connections, stored as nested dictionaries
+        for i, j in v.items():
+            if(type(j) is dict):
+                appendIfNotInlist(connections, i.split()[0])
+                ratio = (1 - (j['armv8_pmuv3_0/l2d_cache_refill/'] / j['armv8_pmuv3_0/l2d_cache/'])) * 100 
+                arm_amazon_refillRatio_var_conn.append(ratio)
+
+
 ################################### Plotting ###################################
 # Varying key size
 plt.figure()
 plt.plot(arm_cavium_refillRatio_var_keys, label="Arm (Cavium)")
+plt.plot(arm_amazon_refillRatio_var_keys, label="Arm (Amazon)")
 plt.xticks(range(len(keys)), keys, rotation=20)
-plt.title("L2D Refill Ratio With Varying Keys")
 plt.ylabel("[%]")
 plt.xlabel("Keys")
 plt.legend()
-title = "L2D Refill ratio"
+title = "L2D Hit Ratio with Varying Keys"
 plt.title(title)
 plt.tight_layout()
 plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
@@ -492,11 +609,12 @@ if SHOW_PLOTS:
 # Varying connections
 plt.figure()
 plt.plot(arm_cavium_refillRatio_var_conn, label="Arm (Cavium)")
+plt.plot(arm_amazon_refillRatio_var_conn, label="Arm (Amazon)")
 plt.xticks(range(len(connections)), connections, rotation=20)
 plt.ylabel("[%]")
 plt.xlabel("Connections")
 plt.legend()
-title = "L2D Refill Ratio @ 4096 Keys, Varying Connections"
+title = "L2D Hit Ratio @ 4096 Keys, Varying Connections"
 plt.title(title)
 plt.tight_layout()
 plt.savefig(OUTDIR + title.replace(' ','_').replace(',','').replace('.','') + ".pdf")
@@ -516,7 +634,7 @@ if SHOW_PLOTS:
 intel_LLCcache = Benchmark(
     "LLC cache",
     ["LLC-loads", "LLC-load-misses"])
-intel_LLCcache.decodeLog(LOGDIR + "llc.sh.intel.log")
+intel_LLCcache.decodeLog(LOGDIR + "llc.sh.intel.xeon.log")
 
 ############################### Data Extraction ################################
 keys = []
