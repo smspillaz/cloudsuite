@@ -26,4 +26,3 @@ RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
 USER memcache
-CMD ["-rps", "18000"]
