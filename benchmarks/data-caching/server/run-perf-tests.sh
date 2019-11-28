@@ -12,7 +12,7 @@ docker network create caching_network || true;
 
 echo "Starting server with perf args ${PERF_ARGS} server args ${SERVER_ARGS}"
 docker rm -f dc-server || true;
-docker run --cpuset-cpus="$CLIENT_CORES_SPEC" -t --name dc-server --net caching_network \
+docker run --cpuset-cpus="1" -t --name dc-server --net caching_network \
     --cap-add SYS_ADMIN \
     -e TOOL_ARGS="/usr/lib/linux-tools/4.15.0-66-generic/perf stat ${PERF_ARGS}" \
     -p 11211:11211 \
