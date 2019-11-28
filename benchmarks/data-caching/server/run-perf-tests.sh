@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x;
+
 CLIENT_CORES_SPEC=${CLIENT_CORES_SPEC:-112}
 
 mkdir -p output/
