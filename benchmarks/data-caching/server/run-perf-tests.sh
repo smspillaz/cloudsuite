@@ -21,7 +21,7 @@ docker run --cpuset-cpus="1" -t --name dc-server --net caching_network \
 echo "Starting client with ${CLIENT_ARGS}"
 
 docker rm -f cloudsuite-data-caching-perf-test-client || true;
-docker run --cpuset-cpus="1" -t --name cloudsuite-data-caching-perf-test-client --net caching_network \
+docker run --cpuset-cpus="$CLIENT_CORES_SPEC" -t --name cloudsuite-data-caching-perf-test-client --net caching_network \
     smspillaz/data-caching:client ${CLIENT_ARGS}
 
 echo "Done, sending SIGINT to memcached"
