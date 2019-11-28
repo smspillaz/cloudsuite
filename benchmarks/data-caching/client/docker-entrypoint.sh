@@ -10,4 +10,4 @@ echo "dc-server, 11211" > "/usr/src/memcached/memcached_client/servers.txt"
 /usr/src/memcached/memcached_client/loader \
 	-a /usr/src/memcached/twitter_dataset/twitter_dataset_5x \
 	-s /usr/src/memcached/memcached_client/servers.txt \
-	-t 123 -T 5 $@
+	-t 30 -T 5 $@
