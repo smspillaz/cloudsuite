@@ -5,11 +5,6 @@ PERF_ARGS=${PERF_ARGS:?"Need to set PERF_ARGS"}
 
 set -x
 
-KEYS="4096 16384 65536 262114" # Scale by factor 4
-CONNS="256 512 1024"
-THREADS="1 2 4 8"
-RPS="27000 28000 29000 30000 31000 32000" # 16384
-
 for keys in $KEYS; do
   for conns in $CONNS; do
     for threads in $THREADS; do
