@@ -2,6 +2,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 
+from systemconstants import *
+
 ################################################################################
 #                               Configuration                                  #
 ################################################################################
@@ -11,6 +13,9 @@ LOGDIR = "logs/"
 OUTDIR = "plots/"
 if not os.path.exists(OUTDIR):
     os.makedirs(OUTDIR)
+
+
+SERVER_REQ_STR = "Outstanding requests per worker:"
 
 ################################################################################
 class Benchmark:
@@ -33,15 +38,36 @@ class Benchmark:
         with open(filename, "r") as f:
             # Pretty naive, but works
             inSegment = False
+            parseServerReqs = False
             segmentCount = 0
             segmentKeys = []
+            serverReqs = []
             for line in f.readlines():
                 if self.endString in line:
+                    # Compute avg. outstanding requests
+                    self.addToMap(self.logVals, segmentKeys +
+                        ["Server queue"], sum(serverReqs) / len(serverReqs))
+
                     inSegment = False
                     segmentKeys = []
+                    serverReqs = []
                     segmentCount += 1
+
                 
                 if inSegment:
+                    # Parse server outstanding requests
+                    if parseServerReqs:
+                        #Format = "# # # # ..."
+                        vals = [int(v) for v in line.strip().split(' ')]
+                        serverReqs.append(sum(vals) / len(vals))
+                        parseServerReqs = False
+
+                    if SERVER_REQ_STR in line:
+                        # Parse server outstanding requests in next line
+                        parseServerReqs = True
+
+
+
                     # Parse performance counter stats
                     # Format: "#####    value       #comment"
                     tokens = line.split()
@@ -51,12 +77,9 @@ class Benchmark:
                         self.addToMap(self.logVals, segmentKeys + [k], v)
                         #logVals[k].append(v)
                 
-                if self.key in line and not inSegment:
+                if line.startswith(self.key) and not inSegment:
                     #Format: "self.key, # x, # y, ..."
-                    segments = line.strip().split(",")
-                    if self.key != segments[0]:
-                        print("Parse error, expected key")
-                    segments = segments[1:]
+                    segments = line.replace(self.key,'').strip().split(",")
                     for seg in segments:
                         seg = seg.strip()
                         segmentKeys.append(seg)
@@ -66,6 +89,142 @@ class Benchmark:
 def appendIfNotInlist(l, v):
     if v not in l:
         l.append(v)
+
+def extract2DValues(d, key):
+    x = []
+    y = []
+    z = []
+
+    for k1, v1 in d.items():
+        x.append(k1)
+        z_vals = []
+        for k2, v2 in v1.items():
+            appendIfNotInlist(y, k2)
+            z_vals.append(v2[key])
+        z.append(z_vals)
+
+    return (x,y,z)
+
+def extractMapFromMap(m, keys):
+    if len(keys) > 0:
+        return extractMapFromMap(m[keys[0]], keys[1:])
+    else:
+        return m
+
+def extractKVFromMap(m, valueKey):
+    # Assumes that the map is 1 level deep
+    return { k: m[k][valueKey] for k, v in m.items()}
+    
+
+################################################################################
+# ARM throughput 
+################################################################################
+arm_cavium_throughput_l1 = Benchmark(
+    "==> Bench:",
+    ["instructions:u", "L1-dcache-load-misses:u", "L1-dcache-loads:u", "armv8_pmuv3_0/l1i_cache_refill/:u", "armv8_pmuv3_0/l1i_cache/:u"])
+arm_cavium_throughput_l1.decodeLog(LOGDIR + "arm-throughput-4waysmt/arm.cavium.throughput.l1.log")
+
+rps1_cavium_keys = ["65536 keys", "512 conns", "6 threads"]
+rps1_cavium = extractKVFromMap(extractMapFromMap(arm_cavium_throughput_l1.logVals, rps1_cavium_keys), "Server queue")
+rps2_cavium_keys = ["65536 keys", "512 conns", "8 threads"]
+rps2_cavium = extractKVFromMap(extractMapFromMap(arm_cavium_throughput_l1.logVals,rps2_cavium_keys ), "Server queue")
+avg_cavium = []
+for k, v in rps2_cavium.items():
+    avg_cavium.append((rps1_cavium[k] + rps2_cavium[k])/2)
+
+
+plt.figure()
+plt.title("Average Total Outstanding Client Requests (Cavium)")
+plt.plot([int(k.replace(" rps",'')) for k in rps1_cavium.keys()], rps1_cavium.values(), label=', '.join(rps1_cavium_keys))
+plt.plot([int(k.replace(" rps",'')) for k in rps2_cavium.keys()], rps2_cavium.values(), label=', '.join(rps2_cavium_keys))
+plt.plot([int(k.replace(" rps",'')) for k in rps1_cavium.keys()], avg_cavium, label='Average', linestyle="--", color="b")
+plt.legend()
+plt.xlabel("RPS")
+plt.ylabel("Outstanding Requests")
+plt.show()
+
+
+################################################################################
+# Intel throughput 
+################################################################################
+
+intel_xeon_throughput_sw = Benchmark(
+    "==> Bench:",
+    ["instructions:u", "instructions:k", "cycles:u", "cycles:k"])
+intel_xeon_throughput_sw.decodeLog(LOGDIR + "intel-throughput-2waysmt/intel.throughput.sw.log")
+
+rps1_xeon_keys = ["65536 keys", "512 conns", "4 threads"]
+rps1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, rps1_xeon_keys), "Server queue")
+rps2_xeon_keys = ["65536 keys", "512 conns", "8 threads"]
+rps2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals,rps2_xeon_keys ), "Server queue")
+avg_xeon = []
+for k, v in rps2_xeon.items():
+    avg_xeon.append((rps1_xeon[k] + rps2_xeon[k])/2)
+
+plt.figure()
+plt.title("Average Total Outstanding Client Requests (Intel)")
+plt.plot([int(k.replace(" rps",'')) for k in rps1_xeon.keys()], rps1_xeon.values(), label=', '.join(rps1_xeon_keys))
+plt.plot([int(k.replace(" rps",'')) for k in rps2_xeon.keys()], rps2_xeon.values(), label=', '.join(rps2_xeon_keys))
+plt.plot([int(k.replace(" rps",'')) for k in rps1_xeon.keys()], avg_xeon, label='Average', linestyle="--", color="b")
+plt.legend()
+plt.xlabel("RPS")
+plt.ylabel("Outstanding Requests")
+plt.show()
+
+################################################################################
+# Compared average throughput 
+################################################################################
+plt.figure()
+plt.title("Average Total Outstanding Client Requests")
+plt.plot([int(k.replace(" rps",'')) for k in rps2_cavium.keys()], avg_cavium, label='Cavium')
+plt.axvline(159000,linestyle='--', color='black')
+plt.plot([int(k.replace(" rps",'')) for k in rps2_xeon.keys()], avg_xeon, label='Xeon')
+plt.axvline(115000,linestyle='--', color='black')
+plt.legend()
+plt.xlabel("RPS")
+plt.ylabel("Outstanding Requests")
+plt.show()
+
+################################################################################
+# IPC 
+################################################################################
+xeon_keys = ["65536 keys", "512 conns", "4 threads"]
+userinstr1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "instructions:u")
+kerninstr1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "instructions:k")
+usercycles1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "cycles:u")
+kerncycles1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "cycles:k")
+#instr1_xeon = []
+#cycles1_xeon = []
+ipc1_xeon = []
+for k, v in userinstr1_xeon.items():
+    instr = userinstr1_xeon[k] + kerninstr1_xeon[k]
+    cycles = usercycles1_xeon[k] + kerncycles1_xeon[k]
+    ipc1_xeon.append(instr/cycles)
+
+xeon_keys = ["65536 keys", "512 conns", "8 threads"]
+userinstr2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "instructions:u")
+kerninstr2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "instructions:k")
+usercycles2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "cycles:u")
+kerncycles2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_sw.logVals, xeon_keys), "cycles:k")
+#instr2_xeon = []
+#cycles2_xeon = []
+ipc2_xeon = []
+for k, v in userinstr2_xeon.items():
+    instr = userinstr2_xeon[k] + kerninstr2_xeon[k]
+    cycles = usercycles2_xeon[k] + kerncycles2_xeon[k]
+    ipc2_xeon.append(instr/cycles)
+
+plt.figure()
+plt.title("IPC with varying RPS")
+plt.plot([int(k.replace(" rps",'')) for k in rps2_xeon.keys()], ipc1_xeon, label='1')
+plt.plot([int(k.replace(" rps",'')) for k in rps2_xeon.keys()], ipc2_xeon, label='2')
+plt.legend()
+plt.xlabel("RPS")
+plt.ylabel("Outstanding Requests")
+plt.show()
+
+
+
 
 ################################################################################
 # User/Kernel instructions, cycles, Dynamic instruction count
