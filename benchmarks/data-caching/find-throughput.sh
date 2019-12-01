@@ -9,7 +9,7 @@ for keys in $KEYS; do
   for conns in $CONNS; do
     for threads in $THREADS; do
       for rps in $RPS; do
-        echo "==> Bench: $keys keys $conns conns $threads threads $rps rps";
+        echo "==> Bench: $keys keys, $conns conns, $threads threads, $rps rps";
         max_conns=$(echo "$conns + 128" | bc)
         client_cores_spec=$START_CPU-$(echo "$START_CPU + $threads" | bc)
         CLIENT_CORES_SPEC="$client_cores_spec" CLIENT_ARGS="-r $rps -k $keys -c $conns -f 512 -w $threads" SERVER_ARGS="-t 1 -m 4096 -n 550 -c $max_conns" bash server/run-perf-tests.sh
