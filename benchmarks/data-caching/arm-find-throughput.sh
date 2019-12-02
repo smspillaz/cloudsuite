@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export THREADS_PER_CORE=4
+export SERVER_CORES="0,1,2,3" # 4-way SMT
 export START_CPU=112
 export PERF_ARGS_L1_CACHES="-e instructions,L1-dcache-load-misses,L1-dcache-loads,armv8_pmuv3_0/l1i_cache_refill/,armv8_pmuv3_0/l1i_cache/"
 export PERF_ARGS_L2_CACHES="-e instructions,armv8_pmuv3_0/l2d_cache_wb/,armv8_pmuv3_0/l2d_cache_refill/,armv8_pmuv3_0/l2d_cache_allocate/"
