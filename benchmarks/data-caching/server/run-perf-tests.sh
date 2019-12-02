@@ -18,6 +18,7 @@ docker run --cpuset-cpus=${SERVER_CORES} -t --name dc-server --net caching_netwo
     -p 11211:11211 \
     -v $(pwd)/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached ${SERVER_ARGS} &
 
+sleep 10;
 echo "Starting client with ${CLIENT_ARGS}"
 
 docker rm -f cloudsuite-data-caching-perf-test-client || true;
