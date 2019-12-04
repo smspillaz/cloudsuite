@@ -1,0 +1,1317 @@
++ for keys in '$KEYS'
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 16384 keys, 256 conns, 4 threads, 115000 rps'
+==> Bench: 16384 keys, 256 conns, 4 threads, 115000 rps
+++ echo '256 + 128'
+++ bc
++ max_conns=384
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 16384 -c 256 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 384'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 384'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 384
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 384
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 384
++ echo 'Starting client with -r 115000 -k 16384 -c 256 -f 512 -w 4'
+Starting client with -r 115000 -k 16384 -c 256 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 16384 -c 256 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 16384 -c 256 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 16384
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 64
+num_worker_connections 64
+Creating worker on tid 3681670912
+starting receive base loop
+num_worker_connections 64
+Creating worker on tid 3092084480
+starting receive base loop
+num_worker_connections 64
+Creating worker on tid 2496116480
+starting receive base loop
+Created 256 connections total
+Creating worker on tid 1900148480
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575413711.412136,       0.0,      298803,     268904,      29899,     177182,      91722,   3.221987,  10.700000,  14.500000,  20.900000,   5.260726,   0.000000,  53.270001, 473.335633
+Outstanding requests per worker:
+100 115 94 101 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117635.9,      588180,     529343,      58837,     394587,     134756,   4.191882,  12.200000,  15.400000,  22.700000,   5.661431,   0.023000,  49.654000, 568.734422
+Outstanding requests per worker:
+110 140 159 103 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117664.7,      588324,     529492,      58832,     415490,     114002,   4.239818,  12.100000,  16.000000,  23.100000,   5.887718,   0.023000,  73.867001, 612.199025
+Outstanding requests per worker:
+128 118 99 120 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117622.7,      588114,     529085,      59029,     427794,     101291,   4.114394,  12.000000,  14.300000,  22.600000,   5.496414,   0.023000,  41.710000, 638.172054
+Outstanding requests per worker:
+181 137 187 110 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117675.9,      588380,     529465,      58915,     436039,      93426,   4.970035,  14.200000,  19.000000,  28.600000,   7.074594,   0.023000,  81.274003, 654.518395
+Outstanding requests per worker:
+129 140 123 116 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117659.5,      588298,     529251,      59047,     442345,      86906,   4.522981,  13.200000,  15.600000,  25.000000,   6.046903,   0.023000,  47.995999, 668.167537
+Outstanding requests per worker:
+104 111 145 110 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117618.5,      588093,     529591,      58502,     447053,      82538,   4.834697,  14.100000,  16.800000,  26.900000,   6.499435,   0.024000,  54.464001, 676.998971
+Outstanding requests per worker:
+179 158 146 175 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117678.9,      588395,     529651,      58744,     451522,      78129,   4.812615,  14.000000,  16.600000,  27.000000,   6.469119,   0.024000,  53.240001, 686.650757
+Outstanding requests per worker:
+108 101 168 147 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117651.3,      588257,     529075,      59182,     453952,      75123,   9.056930,  28.300000,  42.200000,  58.000000,  13.937126,   0.024000, 104.098000, 692.834415
+Outstanding requests per worker:
+141 127 155 111 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117379.1,      586896,     528445,      58451,     456435,      72010,   6.866042,  18.600000,  28.000000,  53.300000,  10.841744,   0.023000,  99.237002, 698.695446
+Outstanding requests per worker:
+440 507 471 480 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117917.3,      589587,     530693,      58894,     461472,      69221,   8.451026,  26.100000,  39.300000,  56.100000,  13.066434,   0.023000,  98.592997, 704.699031
+Outstanding requests per worker:
+170 133 126 142 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117631.7,      588159,     529071,      59088,     461704,      67367,   4.921120,  14.300000,  16.800000,  27.500000,   6.597042,   0.023000,  56.527998, 708.914047
+Outstanding requests per worker:
+206 191 166 130 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117669.7,      588349,     529663,      58686,     464949,      64714,   5.147735,  15.000000,  17.600000,  28.900000,   6.928394,   0.023000,  58.428999, 714.725731
+Outstanding requests per worker:
+181 143 159 124 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.3  0.0  18028  2852 pts/0    Ss+  22:28   0:00 bash docker-ent
+memcache     7  0.2  0.0  96552  6516 pts/0    S+   22:28   0:00 /usr/lib/linux-
+memcache     8  154  0.0 413564 192708 pts/0   Sl+  22:28   1:55 memcached -t 2 
+memcache    17  0.0  0.0  34424  2808 pts/1    Rs+  22:29   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 384':
+
+       28619234489      instructions:u                                              
+         238441328      branch-misses:u           # [33m   6.06%[m of all branches        
+        3933727041      branch-instructions:u                                       
+
+      75.647823248 seconds time elapsed
+
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 16384 keys, 512 conns, 4 threads, 115000 rps'
+==> Bench: 16384 keys, 512 conns, 4 threads, 115000 rps
+++ echo '512 + 128'
+++ bc
++ max_conns=640
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 16384 -c 512 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 640'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 640'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 640
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 640
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 640
++ echo 'Starting client with -r 115000 -k 16384 -c 512 -f 512 -w 4'
+Starting client with -r 115000 -k 16384 -c 512 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 16384 -c 512 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 16384 -c 512 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 16384
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 128
+num_worker_connections 128
+Creating worker on tid 3951949568
+starting receive base loop
+num_worker_connections 128
+Creating worker on tid 2839914240
+starting receive base loop
+num_worker_connections 128
+Creating worker on tid 1733965568
+starting receive base loop
+Created 512 connections total
+Creating worker on tid 625161984
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575413789.412214,       0.0,      268762,     241788,      26974,     158071,      83717,  11.217017,  35.700000,  51.500000,  96.800000,  20.017961,   0.000000, 180.418000, 468.666725
+Outstanding requests per worker:
+187 175 193 183 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117651.5,      588258,     529433,      58825,     391936,     137497,   6.750811,  19.400000,  25.300000,  35.800000,   9.097930,   0.044000,  78.910001, 562.865675
+Outstanding requests per worker:
+200 181 173 210 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117624.9,      588125,     529424,      58701,     414576,     114848,   7.138644,  20.500000,  27.200000,  37.900000,   9.693616,   0.032000,  85.722998, 610.101741
+Outstanding requests per worker:
+237 232 206 223 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117671.7,      588359,     529958,      58401,     427212,     102746,   6.659631,  19.100000,  24.500000,  35.700000,   8.923853,   0.044000,  48.367999, 635.168221
+Outstanding requests per worker:
+176 224 208 209 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117643.3,      588217,     529520,      58697,     435808,      93712,   8.221242,  23.800000,  30.100000,  44.500000,  11.125374,   0.044000, 106.982000, 654.119463
+Outstanding requests per worker:
+199 225 226 216 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117638.7,      588194,     529332,      58862,     441517,      87815,   7.071549,  20.400000,  25.400000,  38.400000,   9.480317,   0.032000,  53.286001, 667.309197
+Outstanding requests per worker:
+245 243 232 229 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117682.7,      588414,     529582,      58832,     446829,      82753,   7.474008,  21.700000,  26.500000,  40.800000,  10.021242,   0.032000,  64.859003, 677.008679
+Outstanding requests per worker:
+185 201 232 176 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117603.3,      588017,     529353,      58664,     450903,      78450,   8.325495,  24.000000,  31.700000,  44.900000,  11.502576,   0.032000, 124.145001, 686.341880
+Outstanding requests per worker:
+286 239 271 245 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117662.7,      588314,     529310,      59004,     453894,      75416,   8.162968,  23.600000,  28.100000,  44.900000,  10.941623,   0.044000,  85.060999, 693.042159
+Outstanding requests per worker:
+236 242 266 246 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117657.7,      588289,     529521,      58768,     457103,      72418,   8.976978,  25.000000,  32.600000,  50.500000,  12.491478,   0.044000, 112.902001, 698.769934
+Outstanding requests per worker:
+228 277 231 241 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117627.9,      588140,     529397,      58743,     459324,      70073,   9.195907,  26.500000,  33.800000,  50.400000,  12.579253,   0.032000, 118.164003, 703.616403
+Outstanding requests per worker:
+267 253 305 279 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117654.1,      588271,     528950,      59321,     462004,      66946,   8.837666,  25.800000,  30.100000,  49.700000,  11.884498,   0.044000,  94.553001, 709.594344
+Outstanding requests per worker:
+289 272 251 286 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117653.5,      588268,     529199,      59069,     463427,      65772,   8.789318,  25.500000,  30.100000,  48.800000,  11.806299,   0.044000,  93.488999, 712.147111
+Outstanding requests per worker:
+287 249 254 307 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.3  0.0  18028  2788 pts/0    Ss+  22:29   0:00 bash docker-ent
+memcache     7  0.3  0.0  96552  6488 pts/0    S+   22:29   0:00 /usr/lib/linux-
+memcache     8  154  0.0 410492 194932 pts/0   Sl+  22:29   1:55 memcached -t 2 
+memcache    17  0.0  0.0  34424  2832 pts/1    Rs+  22:31   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 640':
+
+       28410489351      instructions:u                                              
+         238415790      branch-misses:u           # [33m   6.12%[m of all branches        
+        3896411235      branch-instructions:u                                       
+
+      75.640413222 seconds time elapsed
+
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 16384 keys, 1024 conns, 4 threads, 115000 rps'
+==> Bench: 16384 keys, 1024 conns, 4 threads, 115000 rps
+++ echo '1024 + 128'
+++ bc
++ max_conns=1152
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 16384 -c 1024 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 1152'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 1152'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 1152
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 1152
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 1152
++ echo 'Starting client with -r 115000 -k 16384 -c 1024 -f 512 -w 4'
+Starting client with -r 115000 -k 16384 -c 1024 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 16384 -c 1024 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 16384 -c 1024 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 16384
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 256
+num_worker_connections 256
+Creating worker on tid 3633542912
+starting receive base loop
+num_worker_connections 256
+Creating worker on tid 1502738176
+starting receive base loop
+num_worker_connections 256
+Creating worker on tid 3669260032
+starting receive base loop
+Created 1024 connections total
+Creating worker on tid 1537799936
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575413869.412294,       0.0,      328698,     295944,      32754,     196273,      99671,  18.253870,  67.300000,  87.200000, 149.800000,  33.327203,   0.000000, 293.440998, 479.166018
+Outstanding requests per worker:
+528 470 495 515 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117805.1,      589026,     530281,      58745,     396076,     134205,  11.630384,  33.100000,  44.700000,  59.400000,  15.477660,   0.076000, 101.530001, 570.573803
+Outstanding requests per worker:
+319 319 317 315 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117565.5,      587828,     529109,      58719,     415869,     113240,  11.669411,  33.200000,  45.200000,  60.200000,  15.625377,   0.077000,  90.631999, 613.228482
+Outstanding requests per worker:
+417 407 448 441 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117718.9,      588595,     529474,      59121,     427596,     101878,  12.084259,  34.400000,  46.100000,  63.400000,  16.143479,   0.078000,  80.462001, 637.522651
+Outstanding requests per worker:
+333 343 371 352 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117639.9,      588200,     529311,      58889,     435956,      93355,  12.369744,  35.300000,  47.200000,  64.500000,  16.598553,   0.077000,  94.442002, 655.375719
+Outstanding requests per worker:
+367 353 381 368 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117678.1,      588391,     529522,      58869,     442083,      87439,  12.406611,  35.100000,  46.800000,  64.500000,  16.429880,   0.074000, 103.698999, 667.382420
+Outstanding requests per worker:
+318 371 325 331 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117639.3,      588197,     529116,      59081,     446800,      82316,  11.961161,  34.100000,  45.900000,  62.600000,  15.961514,   0.072000,  93.171000, 678.424485
+Outstanding requests per worker:
+375 322 365 359 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117635.5,      588178,     529336,      58842,     451322,      78014,  12.293421,  35.000000,  46.800000,  64.800000,  16.406324,   0.069000,  76.624997, 687.036111
+Outstanding requests per worker:
+397 383 368 378 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117685.5,      588428,     529405,      59023,     454411,      74994,  12.260791,  34.900000,  46.500000,  64.700000,  16.375653,   0.075000,  73.841996, 693.458860
+Outstanding requests per worker:
+369 300 357 339 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117634.7,      588174,     529243,      58931,     457647,      71596,  15.397336,  44.300000,  58.100000,  93.600000,  21.387292,   0.072000, 217.648998, 699.983937
+Outstanding requests per worker:
+341 373 389 356 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117763.3,      588817,     529817,      59000,     460600,      69217,  11.979862,  34.300000,  45.700000,  63.700000,  16.067628,   0.074000,  72.245002, 704.574085
+Outstanding requests per worker:
+254 233 217 206 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117536.9,      587685,     528979,      58706,     461956,      67023,  12.180111,  34.900000,  46.000000,  64.600000,  16.298713,   0.078000,  74.929997, 709.612128
+Outstanding requests per worker:
+437 350 362 344 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117660.3,      588302,     529096,      59206,     463872,      65224,  12.445163,  35.400000,  47.300000,  65.500000,  16.620302,   0.077000, 101.608001, 713.253570
+Outstanding requests per worker:
+355 392 367 342 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.2  0.0  18028  2860 pts/0    Ss+  22:31   0:00 bash docker-ent
+memcache     7  0.2  0.0  96552  6468 pts/0    S+   22:31   0:00 /usr/lib/linux-
+memcache     8  151  0.0 413700 206936 pts/0   Sl+  22:31   1:56 memcached -t 2 
+memcache    17  0.0  0.0  34424  2768 pts/1    Rs+  22:32   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 1152':
+
+       28549699184      instructions:u                                              
+         240343630      branch-misses:u           # [33m   6.11%[m of all branches        
+        3931546821      branch-instructions:u                                       
+
+      77.777219335 seconds time elapsed
+
++ for keys in '$KEYS'
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 65536 keys, 256 conns, 4 threads, 115000 rps'
+==> Bench: 65536 keys, 256 conns, 4 threads, 115000 rps
+++ echo '256 + 128'
+++ bc
++ max_conns=384
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 65536 -c 256 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 384'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 384'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 384
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 384
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 384
++ echo 'Starting client with -r 115000 -k 65536 -c 256 -f 512 -w 4'
+Starting client with -r 115000 -k 65536 -c 256 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 65536 -c 256 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 65536 -c 256 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 65536
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 64
+num_worker_connections 64
+Creating worker on tid 1222326016
+starting receive base loop
+num_worker_connections 64
+Creating worker on tid 633091840
+starting receive base loop
+num_worker_connections 64
+Creating worker on tid 33810176
+starting receive base loop
+Created 256 connections total
+Creating worker on tid 3736123136
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575413946.412371,       0.0,      297872,     268295,      29577,     176840,      91455,   3.637635,  12.100000,  16.100000,  24.200000,   5.952648,   0.000000,  58.538001, 473.887933
+Outstanding requests per worker:
+130 106 106 116 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117650.7,      588254,     529139,      59115,     393961,     135178,   4.093388,  11.900000,  14.600000,  22.400000,   5.496239,   0.023000,  49.667999, 568.645666
+Outstanding requests per worker:
+142 102 122 115 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117657.3,      588287,     529504,      58783,     416130,     113374,   4.395098,  12.600000,  16.400000,  24.100000,   6.062939,   0.023000,  69.048002, 612.882044
+Outstanding requests per worker:
+113 122 130 109 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117650.3,      588252,     529393,      58859,     427525,     101868,   4.244679,  12.300000,  14.700000,  23.400000,   5.676915,   0.023000,  43.844000, 637.151226
+Outstanding requests per worker:
+123 121 116 129 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117652.9,      588265,     529945,      58320,     436096,      93849,   5.289236,  15.100000,  20.500000,  32.100000,   7.595286,   0.023000,  78.124002, 654.433979
+Outstanding requests per worker:
+122 125 122 135 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117649.9,      588250,     529550,      58700,     442380,      87170,   4.702597,  13.700000,  16.200000,  26.200000,   6.306331,   0.023000,  52.040000, 667.972409
+Outstanding requests per worker:
+111 147 149 110 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117665.3,      588327,     529729,      58598,     447107,      82622,   4.778704,  13.900000,  16.300000,  26.600000,   6.391660,   0.023000,  51.874001, 677.679042
+Outstanding requests per worker:
+128 118 140 87 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117614.5,      588073,     528942,      59131,     450390,      78552,   5.039424,  14.700000,  17.300000,  28.100000,   6.747293,   0.023000,  53.947002, 684.964658
+Outstanding requests per worker:
+165 146 180 172 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117694.3,      588472,     529726,      58746,     454994,      74732,   7.835219,  23.200000,  33.400000,  54.100000,  12.010257,   0.023000,  90.600997, 693.048731
+Outstanding requests per worker:
+107 108 158 102 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117641.7,      588209,     528970,      59239,     457432,      71538,   6.878634,  19.100000,  27.600000,  47.700000,  10.234193,   0.022000,  91.316000, 700.061349
+Outstanding requests per worker:
+120 148 125 132 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117435.7,      587179,     528336,      58843,     459040,      69296,  11.279195,  38.700000,  49.700000,  61.500000,  16.566451,   0.024000, 108.446002, 704.461034
+Outstanding requests per worker:
+386 390 437 396 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117843.7,      589219,     530373,      58846,     463035,      67338,   7.010847,  19.600000,  28.000000,  48.600000,  10.450574,   0.023000,  88.041998, 708.348215
+Outstanding requests per worker:
+153 188 154 159 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117636.7,      588184,     528659,      59525,     463716,      64943,   5.718062,  16.700000,  19.600000,  32.600000,   7.740581,   0.024000,  61.202999, 714.020692
+Outstanding requests per worker:
+180 180 188 182 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'9\r'
++ echo 'memcached pid is: 9'
+memcached pid is: 9
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.3  0.0  18028  2792 pts/0    Ss+  22:32   0:00 bash docker-ent
+memcache     8  0.2  0.0  96552  6444 pts/0    S+   22:32   0:00 /usr/lib/linux-
+memcache     9  152  0.0 411516 191420 pts/0   Sl+  22:32   1:55 memcached -t 2 
+memcache    18  0.0  0.0  34424  2824 pts/1    Rs+  22:33   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 384':
+
+       28471451952      instructions:u                                              
+         239149034      branch-misses:u           # [33m   6.11%[m of all branches        
+        3910902157      branch-instructions:u                                       
+
+      75.767112505 seconds time elapsed
+
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 65536 keys, 512 conns, 4 threads, 115000 rps'
+==> Bench: 65536 keys, 512 conns, 4 threads, 115000 rps
+++ echo '512 + 128'
+++ bc
++ max_conns=640
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 65536 -c 512 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 640'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 640'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 640
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 640
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 640
++ echo 'Starting client with -r 115000 -k 65536 -c 512 -f 512 -w 4'
+Starting client with -r 115000 -k 65536 -c 512 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 65536 -c 512 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 65536 -c 512 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 65536
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 128
+num_worker_connections 128
+Creating worker on tid 2664478464
+starting receive base loop
+num_worker_connections 128
+Creating worker on tid 1556674304
+starting receive base loop
+num_worker_connections 128
+Creating worker on tid 447870720
+starting receive base loop
+Created 512 connections total
+Creating worker on tid 3637049088
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575414024.412449,       0.0,      271027,     243753,      27274,     160018,      83735,  11.827066,  38.100000,  54.800000, 104.500000,  21.957030,   0.000000, 295.648992, 470.388147
+Outstanding requests per worker:
+171 184 167 158 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117640.9,      588205,     529662,      58543,     392716,     136946,   6.893319,  19.900000,  26.200000,  36.700000,   9.353136,   0.045000,  84.406003, 564.299300
+Outstanding requests per worker:
+189 181 188 198 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117664.1,      588321,     529546,      58775,     415735,     113811,   7.028846,  20.400000,  26.300000,  37.600000,   9.516808,   0.044000,  85.588999, 612.199354
+Outstanding requests per worker:
+199 144 183 174 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117621.5,      588108,     529573,      58535,     427840,     101733,   6.900843,  19.900000,  25.100000,  37.200000,   9.255566,   0.033000,  57.969000, 637.940794
+Outstanding requests per worker:
+239 206 215 215 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117655.3,      588277,     529658,      58619,     435398,      94260,   7.938007,  22.900000,  29.500000,  42.900000,  10.814439,   0.044000, 103.812002, 653.961957
+Outstanding requests per worker:
+194 201 239 231 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117678.3,      588392,     529451,      58941,     441844,      87607,   7.378563,  21.300000,  26.100000,  40.300000,   9.889548,   0.045000,  62.410001, 667.410805
+Outstanding requests per worker:
+206 182 182 184 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117636.3,      588182,     529357,      58825,     446738,      82619,   7.763201,  22.500000,  27.500000,  42.600000,  10.441090,   0.033000,  81.334002, 677.197615
+Outstanding requests per worker:
+215 191 211 223 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117649.1,      588246,     529851,      58395,     451242,      78609,   8.600122,  24.900000,  32.800000,  47.100000,  11.995257,   0.044000, 128.188998, 684.853178
+Outstanding requests per worker:
+217 206 230 208 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117602.3,      588012,     529263,      58749,     453806,      75457,   8.263633,  23.900000,  28.600000,  45.500000,  11.080868,   0.045000,  84.383003, 691.971457
+Outstanding requests per worker:
+315 252 264 287 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117596.7,      587984,     528833,      59151,     456968,      71865,   9.128529,  25.800000,  32.200000,  50.100000,  12.224278,   0.032000,  99.693000, 699.057200
+Outstanding requests per worker:
+388 337 364 329 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117727.9,      588640,     530242,      58398,     460325,      69917,   9.335185,  27.000000,  33.400000,  51.700000,  12.700788,   0.033000, 116.475999, 704.086221
+Outstanding requests per worker:
+289 245 259 249 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117648.9,      588245,     529807,      58438,     461935,      67872,   9.859977,  28.500000,  37.300000,  55.700000,  13.869027,   0.044000, 140.683994, 708.099332
+Outstanding requests per worker:
+250 243 288 281 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117669.5,      588348,     529265,      59083,     464395,      64870,   8.392513,  24.400000,  29.300000,  46.400000,  11.304711,   0.032000,  90.875998, 713.258925
+Outstanding requests per worker:
+250 258 230 238 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.2  0.0  18028  2788 pts/0    Ss+  22:33   0:00 bash docker-ent
+memcache     7  0.2  0.0  96552  6436 pts/0    S+   22:33   0:00 /usr/lib/linux-
+memcache     8  154  0.0 412540 196700 pts/0   Sl+  22:33   1:56 memcached -t 2 
+memcache    18  0.0  0.0  34424  2820 pts/1    Rs+  22:35   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 640':
+
+       28390841554      instructions:u                                              
+         238013115      branch-misses:u           # [33m   6.12%[m of all branches        
+        3891744654      branch-instructions:u                                       
+
+      75.840072910 seconds time elapsed
+
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 65536 keys, 1024 conns, 4 threads, 115000 rps'
+==> Bench: 65536 keys, 1024 conns, 4 threads, 115000 rps
+++ echo '1024 + 128'
+++ bc
++ max_conns=1152
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 65536 -c 1024 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 1152'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 1152'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 1152
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 1152
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 1152
++ echo 'Starting client with -r 115000 -k 65536 -c 1024 -f 512 -w 4'
+Starting client with -r 115000 -k 65536 -c 1024 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 65536 -c 1024 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 65536 -c 1024 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 65536
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 256
+num_worker_connections 256
+Creating worker on tid 2575787776
+starting receive base loop
+num_worker_connections 256
+Creating worker on tid 448034560
+starting receive base loop
+num_worker_connections 256
+Creating worker on tid 2611541760
+starting receive base loop
+Created 1024 connections total
+Creating worker on tid 480081664
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575414103.412528,       0.0,      271251,     244240,      27011,     160088,      84152,  34.253005, 115.700000, 183.900000, 277.700000,  62.051533,   0.000000, 410.475999, 470.262901
+Outstanding requests per worker:
+338 335 361 334 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117628.1,      588141,     529185,      58956,     393205,     135980,  11.488269,  33.100000,  43.900000,  60.600000,  15.431672,   0.075000, 100.956999, 566.100456
+Outstanding requests per worker:
+359 386 390 386 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117683.9,      588420,     529719,      58701,     415829,     113890,  12.058950,  34.400000,  46.100000,  62.800000,  16.140560,   0.077000,  94.361000, 612.572562
+Outstanding requests per worker:
+363 354 353 304 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117642.9,      588215,     529646,      58569,     427125,     102521,  12.419620,  35.400000,  47.000000,  65.000000,  16.634652,   0.077000,  90.627998, 636.363692
+Outstanding requests per worker:
+371 348 382 334 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117643.1,      588216,     529520,      58696,     435737,      93783,  12.378834,  35.200000,  46.900000,  65.100000,  16.516373,   0.078000,  76.335996, 653.735173
+Outstanding requests per worker:
+388 372 368 381 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117657.3,      588287,     529464,      58823,     441780,      87684,  12.809967,  36.900000,  49.100000,  68.000000,  17.441328,   0.069000, 138.414994, 666.531774
+Outstanding requests per worker:
+356 364 352 421 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117650.9,      588255,     528988,      59267,     446613,      82375,  12.566173,  35.800000,  47.300000,  66.200000,  16.781367,   0.071000,  78.204997, 677.826024
+Outstanding requests per worker:
+375 392 327 406 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117668.1,      588341,     529838,      58503,     450818,      79020,  12.315670,  35.600000,  45.400000,  67.000000,  16.508439,   0.074000,  77.979997, 684.620754
+Outstanding requests per worker:
+348 353 377 355 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117291.1,      586456,     527355,      59101,     452577,      74778,  12.896699,  36.600000,  48.200000,  68.100000,  17.166082,   0.071000, 102.936000, 692.312029
+Outstanding requests per worker:
+818 794 839 794 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  118015.5,      590078,     530827,      59251,     458176,      72651,  20.940808,  58.900000,  77.800000, 156.000000,  32.152657,   0.071000, 268.375993, 697.939108
+Outstanding requests per worker:
+391 341 356 366 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117626.3,      588132,     529051,      59081,     459696,      69355,  16.634063,  51.100000,  64.400000,  98.100000,  23.406654,   0.074000, 213.232994, 704.469870
+Outstanding requests per worker:
+422 375 405 389 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117671.9,      588360,     529404,      58956,     462079,      67325,  13.081362,  37.300000,  48.500000,  69.500000,  17.449231,   0.070000, 102.439001, 709.215648
+Outstanding requests per worker:
+398 375 378 350 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117632.3,      588162,     529396,      58766,     464093,      65303,  16.878114,  38.400000,  52.200000,  66.600000,  16.949720,   0.077000,  93.336001, 712.845775
+Outstanding requests per worker:
+432 381 368 421 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.2  0.0  18028  2740 pts/0    Ss+  22:35   0:00 bash docker-ent
+memcache     7  0.2  0.0  96552  6472 pts/0    S+   22:35   0:00 /usr/lib/linux-
+memcache     8  152  0.0 410624 206548 pts/0   Sl+  22:35   1:56 memcached -t 2 
+memcache    17  0.0  0.0  34424  2848 pts/1    Rs+  22:36   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 1152':
+
+       28359914069      instructions:u                                              
+         238636876      branch-misses:u           # [33m   6.16%[m of all branches        
+        3876673352      branch-instructions:u                                       
+
+      76.964116225 seconds time elapsed
+
++ for keys in '$KEYS'
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 262114 keys, 256 conns, 4 threads, 115000 rps'
+==> Bench: 262114 keys, 256 conns, 4 threads, 115000 rps
+++ echo '256 + 128'
+++ bc
++ max_conns=384
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 262114 -c 256 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 384'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 384'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 384
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 384
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 384
++ echo 'Starting client with -r 115000 -k 262114 -c 256 -f 512 -w 4'
+Starting client with -r 115000 -k 262114 -c 256 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 262114 -c 256 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 262114 -c 256 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 262114
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 64
+num_worker_connections 64
+Creating worker on tid 2004055808
+starting receive base loop
+num_worker_connections 64
+Creating worker on tid 1412785920
+starting receive base loop
+num_worker_connections 64
+Creating worker on tid 818394880
+starting receive base loop
+Created 256 connections total
+Creating worker on tid 227424000
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575414181.412606,       0.0,      297167,     267258,      29909,     176145,      91113,   4.108900,  13.600000,  18.400000,  29.300000,   6.907204,   0.000000,  69.305003, 474.058842
+Outstanding requests per worker:
+154 152 123 139 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117654.7,      588274,     529405,      58869,     394552,     134853,   4.681385,  13.700000,  16.700000,  26.300000,   6.336581,   0.022000,  60.224999, 568.350856
+Outstanding requests per worker:
+117 147 194 122 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117676.9,      588385,     529821,      58564,     415771,     114050,   4.539992,  13.200000,  16.500000,  25.100000,   6.198321,   0.023000,  61.997999, 612.405643
+Outstanding requests per worker:
+129 113 105 127 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117644.1,      588221,     529353,      58868,     427537,     101816,   4.198788,  12.200000,  14.500000,  23.100000,   5.606633,   0.022000,  49.697001, 637.729927
+Outstanding requests per worker:
+117 138 121 138 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117658.5,      588293,     529579,      58714,     436088,      93491,   4.880735,  14.000000,  18.300000,  26.800000,   6.738808,   0.023000,  70.086002, 655.608912
+Outstanding requests per worker:
+122 151 120 107 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117644.3,      588222,     529263,      58959,     442135,      87128,   4.548393,  13.300000,  15.600000,  25.200000,   6.087125,   0.023000,  45.480002, 668.087433
+Outstanding requests per worker:
+117 114 155 156 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117590.5,      587953,     529091,      58862,     446731,      82360,   7.656215,  13.700000,  17.700000,  22.700000,   4.939028,   0.055000,  40.173002, 677.067658
+Outstanding requests per worker:
+196 231 220 233 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117642.1,      588211,     529107,      59104,     450499,      78608,  10.677652,  21.600000,  27.000000,  48.400000,   9.151570,   0.083000,  89.001000, 685.714903
+Outstanding requests per worker:
+226 254 240 223 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117729.7,      588649,     529418,      59231,     454609,      74809,   7.867353,  15.200000,  18.300000,  25.500000,   5.554518,   0.024000,  59.524000, 693.374708
+Outstanding requests per worker:
+143 115 112 189 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117619.7,      588099,     529570,      58529,     458136,      71434,   8.025800,  22.600000,  30.900000,  48.700000,  11.235723,   0.024000,  90.178996, 700.784537
+Outstanding requests per worker:
+187 189 156 207 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117368.7,      586844,     527957,      58887,     459102,      68855,  17.493128,  53.800000,  61.300000,  77.800000,  22.647211,   0.023000, 131.286994, 705.198698
+Outstanding requests per worker:
+501 520 611 521 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117648.5,      588243,     529341,      58902,     462329,      67012,  16.874535,  50.500000,  57.500000,  68.100000,  21.077903,   0.024000, 105.926998, 708.855768
+Outstanding requests per worker:
+586 552 495 540 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117934.9,      589675,     530879,      58796,     466128,      64751,  14.692204,  47.700000,  56.100000,  66.700000,  19.821181,   0.023000, 124.738000, 714.865506
+Outstanding requests per worker:
+125 206 169 258 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.3  0.0  18028  2760 pts/0    Ss+  22:36   0:00 bash docker-ent
+memcache     7  0.2  0.0  96552  6468 pts/0    S+   22:36   0:00 /usr/lib/linux-
+memcache     8  157  0.0 413564 192980 pts/0   Sl+  22:36   1:57 memcached -t 2 
+memcache    18  0.0  0.0  34424  2816 pts/1    Rs+  22:37   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 384':
+
+       28236344026      instructions:u                                              
+         235628912      branch-misses:u           # [33m   6.21%[m of all branches        
+        3794435499      branch-instructions:u                                       
+
+      76.250010278 seconds time elapsed
+
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 262114 keys, 512 conns, 4 threads, 115000 rps'
+==> Bench: 262114 keys, 512 conns, 4 threads, 115000 rps
+++ echo '512 + 128'
+++ bc
++ max_conns=640
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 262114 -c 512 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 640'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 640'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 640
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 640
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 640
++ echo 'Starting client with -r 115000 -k 262114 -c 512 -f 512 -w 4'
+Starting client with -r 115000 -k 262114 -c 512 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 262114 -c 512 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 262114 -c 512 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 262114
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 128
+num_worker_connections 128
+Creating worker on tid 3388221184
+starting receive base loop
+num_worker_connections 128
+Creating worker on tid 2286860032
+starting receive base loop
+num_worker_connections 128
+Creating worker on tid 1174824704
+starting receive base loop
+Created 512 connections total
+Creating worker on tid 72267520
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575414259.412684,       0.0,      270610,     243365,      27245,     159523,      83842,  15.846388,  52.200000,  80.000000, 122.500000,  27.856457,   0.000000, 279.237986, 470.079822
+Outstanding requests per worker:
+196 169 178 166 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117594.5,      587973,     529191,      58782,     393596,     135595,   6.726030,  19.400000,  25.200000,  35.800000,   9.052905,   0.032000,  72.772004, 566.744321
+Outstanding requests per worker:
+274 235 284 225 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117649.1,      588246,     529819,      58427,     415154,     114665,   6.977635,  20.100000,  26.800000,  36.600000,   9.497135,   0.032000,  88.048004, 611.199859
+Outstanding requests per worker:
+252 253 279 250 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117703.3,      588517,     529260,      59257,     426697,     102563,   7.137851,  20.600000,  25.900000,  38.600000,   9.578670,   0.043000,  76.246001, 635.599711
+Outstanding requests per worker:
+191 228 175 210 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117613.5,      588068,     529581,      58487,     436218,      93363,   7.690321,  22.200000,  29.400000,  40.900000,  10.518653,   0.044000, 104.291998, 654.354184
+Outstanding requests per worker:
+285 256 217 240 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117687.1,      588436,     529384,      59052,     441947,      87437,   7.880981,  22.700000,  27.500000,  43.300000,  10.574383,   0.033000,  77.812999, 666.622656
+Outstanding requests per worker:
+205 196 237 210 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117608.5,      588043,     529109,      58934,     446260,      82849,   7.839764,  22.900000,  27.900000,  43.200000,  10.575902,   0.032000,  75.492002, 676.919788
+Outstanding requests per worker:
+286 235 298 247 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117662.7,      588314,     529161,      59153,     450739,      78422,   8.282925,  24.100000,  28.500000,  46.200000,  11.129868,   0.044000,  81.385002, 685.999312
+Outstanding requests per worker:
+266 251 245 258 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117651.7,      588259,     529003,      59256,     453745,      75258,   9.177633,  26.500000,  32.900000,  50.700000,  12.469258,   0.032000, 115.474001, 692.343998
+Outstanding requests per worker:
+289 244 268 240 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117654.7,      588274,     529094,      59180,     457114,      71980,   9.752977,  26.700000,  36.600000,  58.100000,  13.793708,   0.032000, 139.768004, 699.139869
+Outstanding requests per worker:
+252 295 248 243 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117667.1,      588336,     529455,      58881,     460050,      69405,   9.520552,  27.700000,  34.500000,  53.000000,  13.049251,   0.032000, 128.474995, 704.733269
+Outstanding requests per worker:
+247 240 233 242 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117635.7,      588179,     529314,      58865,     462119,      67195,   8.484338,  24.700000,  29.300000,  47.300000,  11.421656,   0.044000,  90.910003, 709.263275
+Outstanding requests per worker:
+243 262 252 292 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117660.5,      588303,     529631,      58672,     464217,      65414,   8.667421,  25.300000,  29.500000,  48.400000,  11.643231,   0.044000,  87.975003, 712.687701
+Outstanding requests per worker:
+248 274 219 274 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'7\r'
++ echo 'memcached pid is: 7'
+memcached pid is: 7
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.3  0.0  18028  2748 pts/0    Ss+  22:37   0:00 bash docker-ent
+memcache     6  0.2  0.0  96552  6520 pts/0    S+   22:37   0:00 /usr/lib/linux-
+memcache     7  152  0.0 411516 195336 pts/0   Sl+  22:37   1:56 memcached -t 2 
+memcache    16 17.0  0.0  34424  2828 pts/1    Rs+  22:39   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 640':
+
+       28330868413      instructions:u                                              
+         242602899      branch-misses:u           # [33m   6.22%[m of all branches        
+        3897995023      branch-instructions:u                                       
+
+      76.298495128 seconds time elapsed
+
++ for conns in '$CONNS'
++ for threads in '$THREADS'
++ for rps in '$RPS'
++ echo '==> Bench: 262114 keys, 1024 conns, 4 threads, 115000 rps'
+==> Bench: 262114 keys, 1024 conns, 4 threads, 115000 rps
+++ echo '1024 + 128'
+++ bc
++ max_conns=1152
+++ echo '24 + 4'
+++ bc
++ client_cores_spec=24-28
++ CLIENT_CORES_SPEC=24-28
++ CLIENT_ARGS='-r 115000 -k 262114 -c 1024 -f 512 -w 4'
++ SERVER_ARGS='-t 2 -m 4096 -n 550 -c 1152'
++ bash server/run-perf-tests.sh
++ CLIENT_CORES_SPEC=24-28
++ mkdir -p output/
++ chmod -R 777 output/
++ docker network rm caching_network
+Error response from daemon: error while removing network: network caching_network id 8fbc147ab70b5c4e575fcc8a0ebd1653271cac62030a9f144b4f61c28e83f8af has active endpoints
++ true
++ docker network create caching_network
+Error response from daemon: network with name caching_network already exists
++ true
++ echo 'Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 1152'
+Starting server with perf args -e instructions:u,branch-misses:u,branch-instructions:u server args -t 2 -m 4096 -n 550 -c 1152
++ docker rm -f dc-server
+dc-server
++ sleep 10
+++ pwd
++ docker run --cpuset-cpus=0,1 -t --name dc-server --net caching_network --cap-add SYS_ADMIN -e 'TOOL_ARGS=/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u' -p 11211:11211 -v /root/cloudsuite/benchmarks/data-caching/output:/output smspillaz/data-caching:server bash docker-entrypoint.sh memcached -t 2 -m 4096 -n 550 -c 1152
+/usr/lib/linux-tools/4.15.0-66-generic/perf stat -e instructions:u,branch-misses:u,branch-instructions:u memcached -t 2 -m 4096 -n 550 -c 1152
++ echo 'Starting client with -r 115000 -k 262114 -c 1024 -f 512 -w 4'
+Starting client with -r 115000 -k 262114 -c 1024 -f 512 -w 4
++ docker rm -f cloudsuite-data-caching-perf-test-client
+cloudsuite-data-caching-perf-test-client
++ docker run --cpuset-cpus=24-28 -t --name cloudsuite-data-caching-perf-test-client --net caching_network smspillaz/data-caching:client -r 115000 -k 262114 -c 1024 -f 512 -w 4
++ echo 'dc-server, 11211'
++ /usr/src/memcached/memcached_client/loader -a /usr/src/memcached/twitter_dataset/twitter_dataset_5x -s /usr/src/memcached/memcached_client/servers.txt -t 60 -T 5 -r 115000 -k 262114 -c 1024 -f 512 -w 4
+stats_time = 5
+Configuration:
+
+nProcessors on system: 48
+nWorkers: 4
+runtime: 60
+Fixed value size: 512
+Get fraction: 0.900000
+Naggle's algorithm: False
+
+
+host: dc-server
+address: 172.18.0.2
+Loading key value file...created uniform distribution 262114
+rps 115000 cpus 4
+meanInterarrival 34
+num_worker_connections 256
+num_worker_connections 256
+Creating worker on tid 4102452992
+starting receive base loop
+num_worker_connections 256
+Creating worker on tid 1972500224
+starting receive base loop
+num_worker_connections 256
+Creating worker on tid 4139022080
+starting receive base loop
+Created 1024 connections total
+Creating worker on tid 2007561984
+starting receive base loop
+Stats:
+-------------------------
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+1575414338.412763,       0.0,      262751,     236364,      26387,     154679,      81685,  47.496182, 179.100000, 231.900000, 300.800000,  78.380336,   0.000000, 474.189997, 468.739195
+Outstanding requests per worker:
+2045 2253 1934 2126 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  119042.1,      595211,     535572,      59639,     396045,     139527,  26.134270,  79.200000, 139.900000, 219.800000,  47.746175,   0.072000, 458.958000, 562.232566
+Outstanding requests per worker:
+326 393 367 350 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117658.3,      588292,     529921,      58371,     415263,     114658,  11.484412,  32.700000,  44.400000,  59.300000,  15.354971,   0.072000,  82.410999, 610.373790
+Outstanding requests per worker:
+356 318 357 386 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117643.1,      588216,     529780,      58436,     427314,     102466,  11.541243,  32.800000,  44.600000,  59.900000,  15.372330,   0.070000,  80.283001, 636.252314
+Outstanding requests per worker:
+356 390 357 366 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117678.3,      588392,     529778,      58614,     436148,      93630,  12.413830,  35.200000,  47.300000,  64.300000,  16.601154,   0.069000,  94.012000, 654.865045
+Outstanding requests per worker:
+377 338 352 303 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117667.7,      588339,     529555,      58784,     441209,      88346,  11.924905,  33.900000,  45.900000,  62.100000,  15.896739,   0.073000,  71.633004, 665.879389
+Outstanding requests per worker:
+303 352 316 336 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117617.7,      588089,     529366,      58723,     446603,      82763,  11.853132,  33.800000,  45.700000,  61.800000,  15.823641,   0.072000,  70.808999, 676.570042
+Outstanding requests per worker:
+336 381 386 384 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117688.1,      588441,     529651,      58790,     451107,      78544,  13.538988,  38.800000,  53.500000,  69.000000,  18.697552,   0.071000, 182.953000, 685.618181
+Outstanding requests per worker:
+332 335 298 354 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117624.9,      588125,     529315,      58810,     454009,      75306,  12.254034,  34.900000,  46.500000,  64.300000,  16.351126,   0.071000, 105.819002, 692.079799
+Outstanding requests per worker:
+383 371 384 327 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117653.3,      588267,     529155,      59112,     456877,      72278,  13.091020,  36.200000,  49.900000,  67.300000,  17.191047,   0.076000, 102.103002, 699.331848
+Outstanding requests per worker:
+357 357 395 375 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117630.1,      588151,     529302,      58849,     459784,      69518,  12.627958,  36.000000,  47.700000,  66.800000,  16.867917,   0.078000,  78.139000, 704.397682
+Outstanding requests per worker:
+450 376 371 401 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117671.7,      588359,     529560,      58799,     462052,      67508,  16.083415,  49.300000,  63.500000,  94.700000,  22.950593,   0.076000, 228.508994, 709.377831
+Outstanding requests per worker:
+378 372 362 390 
+  timeDiff,     rps,        requests,     gets,       sets,      hits,       misses,   avg_lat,      90th,      95th,        99th,       std,       min,        max,    avgGetSize
+  5.000005,  117665.7,      588329,     529378,      58951,     464254,      65124,  11.753350,  34.600000,  43.300000,  65.700000,  15.973250,   0.075000,  77.636003, 713.263895
+Outstanding requests per worker:
+360 356 380 348 
+Ran for 62.000062, exiting
++ echo 'Done, sending SIGINT to memcached'
+Done, sending SIGINT to memcached
+++ docker exec -it dc-server pidof memcached
++ MEMCACHED_PID=$'8\r'
++ echo 'memcached pid is: 8'
+memcached pid is: 8
++ docker exec -it dc-server ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+memcache     1  0.3  0.0  18028  2740 pts/0    Ss+  22:39   0:00 bash docker-ent
+memcache     7  0.2  0.0  96552  6488 pts/0    S+   22:39   0:00 /usr/lib/linux-
+memcache     8  149  0.0 410624 206112 pts/0   Sl+  22:39   1:55 memcached -t 2 
+memcache    17  0.0  0.0  34424  2816 pts/1    Rs+  22:40   0:00 ps aux
++ docker exec -it dc-server bash -c 'kill -INT $(pidof memcached)'
+Signal handled: Interrupt.
+
+ Performance counter stats for 'memcached -t 2 -m 4096 -n 550 -c 1152':
+
+       28525438706      instructions:u                                              
+         239207231      branch-misses:u           # [33m   6.12%[m of all branches        
+        3905549152      branch-instructions:u                                       
+
+      77.252648079 seconds time elapsed
+
