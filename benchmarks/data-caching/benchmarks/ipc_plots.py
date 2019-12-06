@@ -4,7 +4,7 @@ import os
 
 from systemconstants import *
 from benchmarkdata import *
-from decodedlogs import intel_xeon_max_throughput_sw
+from decodedlogs import *
 
 ################################################################################
 #                               Configuration                                  #
@@ -69,7 +69,7 @@ keys = ["16384 keys", "65536 keys", "262114 keys"]
 conns = ["256 conns", "512 conns", "1024 conns"]
 
 toPlotLabels = []
-bars = []
+xeon_ipc_bars = []
 for c in conns:
     bar = []
     for k in keys:
@@ -81,14 +81,14 @@ for c in conns:
         #ipc_k = instr_k["avg"] / cycles_k["avg"]
         toPlotLabels.append(k + ", " + c)
         bar.append(ipc_u)
-    bars.append(bar)
+    xeon_ipc_bars.append(bar)
 
 plt.figure()
 width = 0.25
-x = np.arange(len(bars))
-plt.bar(x - width, bars[0], width, label=keys[0])
-plt.bar(x,  bars[1], width, label=keys[1])
-plt.bar(x + width, bars[2], width, label=keys[2])
+x = np.arange(len(xeon_ipc_bars))
+plt.bar(x - width, xeon_ipc_bars[0], width, label=keys[0])
+plt.bar(x,  xeon_ipc_bars[1], width, label=keys[1])
+plt.bar(x + width, xeon_ipc_bars[2], width, label=keys[2])
 plt.xticks(range(len(conns)), conns, rotation = 20)
 plt.title("Xeon IPC with varying keys, connections @/ max throughput")
 plt.ylabel("IPC (User mode)")
@@ -120,8 +120,8 @@ userinstr1_arm = extractKVFromMap(extractMapFromMap(arm_cavium_throughput_sw.log
 usercycles1_arm = extractKVFromMap(extractMapFromMap(arm_cavium_throughput_sw.logVals, arm_keys), "cycles:u")
 ipc1_arm = []
 for k, v in userinstr1_arm.items():
-    instr = userinstr1_arm[k] + kerninstr1_arm[k]
-    cycles = usercycles1_arm[k] + kerncycles1_arm[k]
+    instr = userinstr1_arm[k] 
+    cycles = usercycles1_arm[k]
     ipc1_arm.append(instr/cycles)
 
 arm_keys = ["65536 keys", "512 conns", "8 threads"]
@@ -131,8 +131,8 @@ usercycles2_arm = extractKVFromMap(extractMapFromMap(arm_cavium_throughput_sw.lo
 #cycles2_arm = []
 ipc2_arm = []
 for k, v in userinstr2_arm.items():
-    instr = userinstr2_arm[k] + kerninstr2_arm[k]
-    cycles = usercycles2_arm[k] + kerncycles2_arm[k]
+    instr = userinstr2_arm[k]
+    cycles = usercycles2_arm[k]
     ipc2_arm.append(instr/cycles)
 
 plt.figure()
@@ -152,35 +152,80 @@ keys = ["16384 keys", "65536 keys", "262114 keys"]
 conns = ["256 conns", "512 conns", "1024 conns"]
 
 toPlotLabels = []
-bars = []
+arm_ipc_bars = []
 for c in conns:
     bar = []
     for k in keys:
-        instr_u = intel_arm_max_throughput_sw.logVals[k][c]["4 threads"]["115000 rps"]["instructions:u"]
-        #instr_k = intel_arm_max_throughput_sw.logVals[k][c]["4 threads"]["115000 rps"]["instructions:k"]
-        cycles_u = intel_arm_max_throughput_sw.logVals[k][c]["4 threads"]["115000 rps"]["cycles:u"]
-        #cycles_k = intel_arm_max_throughput_sw.logVals[k][c]["4 threads"]["115000 rps"]["cycles:k"]
+        instr_u = arm_cavium_max_throughput_sw.logVals[k][c]["8 threads"]["159000 rps"]["instructions:u"]
+        cycles_u = arm_cavium_max_throughput_sw.logVals[k][c]["8 threads"]["159000 rps"]["cycles:u"]
         ipc_u = instr_u["avg"] / cycles_u["avg"]
-        #ipc_k = instr_k["avg"] / cycles_k["avg"]
         toPlotLabels.append(k + ", " + c)
         bar.append(ipc_u)
-    bars.append(bar)
+    arm_ipc_bars.append(bar)
 
 plt.figure()
 width = 0.25
-x = np.arange(len(bars))
-plt.bar(x - width, bars[0], width, label=keys[0])
-plt.bar(x,  bars[1], width, label=keys[1])
-plt.bar(x + width, bars[2], width, label=keys[2])
-plt.xticks(range(len(conns)), conns, rotation = 20)
+x = np.arange(len(arm_ipc_bars))
+plt.bar(x - width, arm_ipc_bars[0], width, label=keys[0])
+plt.bar(x,  arm_ipc_bars[1], width, label=keys[1])
+plt.bar(x + width, arm_ipc_bars[2], width, label=keys[2])
+plt.xticks(range(len(conns)), conns)
 plt.title("arm IPC with varying keys, connections @/ max throughput")
 plt.ylabel("IPC (User mode)")
 plt.ylim(0,0.8)
 plt.legend()
 plt.show()
 
+################################################################################
+# IPC Sweetspot per with power and area
+################################################################################
+
+bars = []
+keys = ["Saturated IPC / (mm2 / core)", "Saturated IPC / (watt / core)"]
+
+# cavium
+IPC_max_cavium = np.average(arm_ipc_bars)
+bars.append([IPC_max_cavium / (die_cavium / cores_cavium), IPC_max_cavium / (TDP_cavium / cores_cavium)])
+
+# xeon
+IPC_max_xeon = np.average(arm_ipc_bars)
+bars.append([IPC_max_xeon / (die_xeon / cores_xeon), IPC_max_xeon / (TDP_xeon / cores_xeon)])
+
+plt.figure()
+width = 0.35
+x = np.arange(len(bars))
+plt.bar(x - width/2, bars[0], width, label="Cavium")
+plt.bar(x + width/2, bars[1], width, label="Xeon")
+plt.xticks(range(len(keys)), keys)
+plt.title("IPC per Area and TDP")
+plt.ylabel("IPC")
+plt.legend()
+plt.show()
 
 
+################################################################################
+# RPS Sweetspot per with power and area
+################################################################################
+
+bars = []
+keys = ["Saturated RPS / (mm2 / core)", "Saturated RPS / (watt / core)"]
+
+# cavium
+bars.append([RPS_max_cavium / (die_cavium / cores_cavium), RPS_max_cavium / (TDP_cavium / cores_cavium)])
+
+# xeon
+bars.append([RPS_max_xeon / (die_xeon / cores_xeon), RPS_max_xeon / (TDP_xeon / cores_xeon)])
+
+plt.figure()
+width = 0.35
+x = np.arange(len(bars))
+plt.bar(x - width/2, bars[0], width, label="Cavium")
+plt.bar(x + width/2, bars[1], width, label="Xeon")
+plt.xticks(range(len(keys)), keys)
+plt.title("RPS per Area and TDP")
+plt.ylabel("RPS")
+plt.legend()
+plt.show()
 
 
 
