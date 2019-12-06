@@ -4,7 +4,7 @@ import os
 
 from systemconstants import *
 from benchmarkdata import *
-from decodedlogs import intel_xeon_max_throughput_l1d, intel_xeon_max_throughput_llc
+from decodedlogs import *
 
 ################################################################################
 #                               Configuration                                  #
@@ -17,8 +17,42 @@ OUTDIR = "plots/"
 if not os.path.exists(OUTDIR):
     os.makedirs(OUTDIR)
 
+CMT1 = "d1 = cache misses, d2 = cache accesses"
+CMT2 = "d1 = cach misses, d2 = cache hits"
 
-def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm):
+def calculateMissRate(d1, d2, cmt):
+    out = []
+    if cmt is CMT1:
+        for k, v in d1.items():
+            loads = d2[k]
+            misses = d1[k]
+            out.append((1 - (misses/loads)) * 100)
+    elif cmt is CMT2:
+        for k, v in d1.items():
+            hits = d2[k]
+            misses = d1[k]
+            tot = hits + misses
+            out.append((1 - (misses/tot)) * 100)
+    return out
+
+def calculateMissRateAvgStd(d1, d2, cmt):
+    out = []
+    if cmt is CMT1:
+        for k, v in d1.items():
+            loads = d2[k]
+            misses = d1[k]
+            out.append((1 - (misses/loads)) * 100)
+    elif cmt is CMT2:
+        for k, v in d1.items():
+            hits = d2[k]
+            misses = d1[k]
+            tot = hits + misses
+            out.append((1 - (misses/tot)) * 100)
+    return out
+
+
+
+def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm, keys, maxtpthreads, maxtprps, cmt):
     ################################################################################
     # IPC over a range
     ################################################################################
@@ -27,23 +61,15 @@ def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm):
         ["instructions:u", misskey, loadkey])
     intel_xeon_throughput_cachebm.decodeLog(LOGDIR + logfile)
 
-    xeon_keys = ["65536 keys", "512 conns", "4 threads"]
+    xeon_keys = keys[0]
     misses1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_cachebm.logVals, xeon_keys), misskey)
     loads1_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_cachebm.logVals, xeon_keys), loadkey)
-    hitrate1_xeon = []
-    for k, v in loads1_xeon.items():
-        loads = loads1_xeon[k]
-        misses = misses1_xeon[k]
-        hitrate1_xeon.append((1 - (misses/loads)) * 100)
+    hitrate1_xeon = calculateMissRate(misses1_xeon, loads1_xeon, cmt)
 
-    xeon_keys = ["65536 keys", "512 conns", "8 threads"]
+    xeon_keys = keys[1]
     misses2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_cachebm.logVals, xeon_keys), misskey)
     loads2_xeon = extractKVFromMap(extractMapFromMap(intel_xeon_throughput_cachebm.logVals, xeon_keys), loadkey)
-    hitrate2_xeon = []
-    for k, v in loads2_xeon.items():
-        loads = loads2_xeon[k]
-        misses = misses2_xeon[k]
-        hitrate2_xeon.append((1 - (misses/loads)) * 100)
+    hitrate2_xeon = calculateMissRate(misses2_xeon, loads2_xeon, cmt)
 
     plt.figure()
     plt.title(system + " " + cachetype + " Hit rate with varying RPS")
@@ -67,10 +93,17 @@ def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm):
     for c in conns:
         bar = []
         for k in keys:
-            misses = maxtpbm.logVals[k][c]["4 threads"]["115000 rps"][misskey]
-            loads = maxtpbm.logVals[k][c]["4 threads"]["115000 rps"][loadkey]
-            toPlotLabels.append(k + ", " + c)
-            bar.append((1 - (misses['avg']/loads['avg'])) * 100)
+            if cmt is CMT1:
+                misses = maxtpbm.logVals[k][c][maxtpthreads][maxtprps][misskey]
+                loads = maxtpbm.logVals[k][c][maxtpthreads][maxtprps][loadkey]
+                toPlotLabels.append(k + ", " + c)
+                bar.append((1 - (misses['avg']/loads['avg'])) * 100)
+            elif cmt is CMT2:
+                misses = maxtpbm.logVals[k][c][maxtpthreads][maxtprps][misskey]
+                hits = maxtpbm.logVals[k][c][maxtpthreads][maxtprps][loadkey]
+                total = misses['avg'] + hits['avg']
+                toPlotLabels.append(k + ", " + c)
+                bar.append((1 - (misses['avg']/total)) * 100)
         bars.append(bar)
 
     plt.figure()
@@ -86,6 +119,9 @@ def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm):
     plt.legend()
     plt.show()
 
+xeon_keys = [["65536 keys", "512 conns", "4 threads"], ["65536 keys", "512 conns", "8 threads"]]
+arm_keys =  [["65536 keys", "512 conns", "6 threads"], ["65536 keys", "512 conns", "8 threads"]]
+
 # LLC
 plotCacheStats(
     "Xeon",
@@ -93,7 +129,24 @@ plotCacheStats(
     "LLC-loads", 
     "LLC-load-misses", 
     "LLC",
-    intel_xeon_max_throughput_llc)
+    intel_xeon_max_throughput_llc,
+    xeon_keys,
+    "4 threads",
+    "115000 rps",
+    CMT1)
+
+"""
+plotCacheStats(
+    "Arm",
+    "arm-throughput-4waysmt/arm.cavium.throughput.l2.log",
+    "armv8_pmuv3_0/l1i_cache/:u", 
+    "armv8_pmuv3_0/l1i_cache_refill/:u", 
+    "L2D",
+    arm_cavium_max_throughput_l2,
+    arm_keys)
+"""
+
+
 
 # L1D
 plotCacheStats(
@@ -102,7 +155,48 @@ plotCacheStats(
     "L1-dcache-loads", 
     "L1-dcache-load-misses", 
     "L1D",
-    intel_xeon_max_throughput_l1d)
+    intel_xeon_max_throughput_l1d,
+    xeon_keys,
+    "4 threads",
+    "115000 rps",
+    CMT1)
+
+plotCacheStats(
+    "Arm",
+    "arm-throughput-4waysmt/arm.cavium.throughput.l1.log",
+    "L1-dcache-loads:u", 
+    "L1-dcache-load-misses:u", 
+    "L1D",
+    arm_cavium_max_throughput_l1,
+    arm_keys,
+    "8 threads",
+    "159000 rps",
+    CMT1)
+
+# L1I
+plotCacheStats(
+    "Xeon",
+    "intel-throughput-2waysmt/intel.throughput.l1i.log",
+    "icache.hit:u", 
+    "L1-icache-load-misses", 
+    "L1I",
+    intel_xeon_max_throughput_l1i,
+    xeon_keys,
+    "4 threads",
+    "115000 rps",
+    CMT2)
+
+plotCacheStats(
+    "Arm",
+    "arm-throughput-4waysmt/arm.cavium.throughput.l1.log",
+    "armv8_pmuv3_0/l1i_cache/:u", 
+    "armv8_pmuv3_0/l1i_cache_refill/:u", 
+    "L1I",
+    arm_cavium_max_throughput_l1,
+    arm_keys,
+    "8 threads",
+    "159000 rps",
+    CMT1)
 
 
 print("Done")
