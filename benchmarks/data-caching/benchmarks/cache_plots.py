@@ -18,7 +18,7 @@ if not os.path.exists(OUTDIR):
     os.makedirs(OUTDIR)
 
 
-def plotCacheStats(logfile, loadkey, misskey, cachetype, maxtpbm):
+def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm):
     ################################################################################
     # IPC over a range
     ################################################################################
@@ -46,7 +46,7 @@ def plotCacheStats(logfile, loadkey, misskey, cachetype, maxtpbm):
         hitrate2_xeon.append((1 - (misses/loads)) * 100)
 
     plt.figure()
-    plt.title(cachetype + " Hit rate with varying RPS")
+    plt.title(system + " " + cachetype + " Hit rate with varying RPS")
     plt.plot([int(k.replace(" rps",'')) for k in loads1_xeon.keys()], hitrate1_xeon, label='4 threads')
     plt.plot([int(k.replace(" rps",'')) for k in loads2_xeon.keys()], hitrate2_xeon, label='8 threads')
     plt.legend()
@@ -61,25 +61,34 @@ def plotCacheStats(logfile, loadkey, misskey, cachetype, maxtpbm):
     keys = ["16384 keys", "65536 keys", "262114 keys"]
     conns = ["256 conns", "512 conns", "1024 conns"]
 
+    width = 0.25
     toPlotLabels = []
-    toPlot = []
-    for k in keys:
-        for c in conns:
+    bars = []
+    for c in conns:
+        bar = []
+        for k in keys:
             misses = maxtpbm.logVals[k][c]["4 threads"]["115000 rps"][misskey]
             loads = maxtpbm.logVals[k][c]["4 threads"]["115000 rps"][loadkey]
             toPlotLabels.append(k + ", " + c)
-            toPlot.append((1 - (misses['avg']/loads['avg'])) * 100)
+            bar.append((1 - (misses['avg']/loads['avg'])) * 100)
+        bars.append(bar)
 
     plt.figure()
-    plt.plot(range(len(toPlot)), toPlot, label='Kernel IPC')
-    plt.xticks(range(len(toPlotLabels)), toPlotLabels, rotation = 20)
-    plt.title("Xeon " + cachetype + " Hit Rate with varying keys, connections w/ max throughput")
+    x = np.arange(len(bars))
+    plt.bar(x - width, bars[0], width, label=keys[0])
+    plt.bar(x,  bars[1], width, label=keys[1])
+    plt.bar(x + width, bars[2], width, label=keys[2])
+    plt.ylim(0.95*(min([min(b) for b in bars])),1.02*(max([max(b) for b in bars])))
+
+    plt.xticks(range(len(conns)), conns, rotation = 20)
+    plt.title(system + " " + cachetype + " Hit Rate with varying keys, connections @ max throughput")
     plt.ylabel("[%]")
     plt.legend()
     plt.show()
 
 # LLC
 plotCacheStats(
+    "Xeon",
     "intel-throughput-2waysmt/intel.throughput.l2.log",
     "LLC-loads", 
     "LLC-load-misses", 
@@ -88,12 +97,12 @@ plotCacheStats(
 
 # L1D
 plotCacheStats(
+    "Xeon",
     "intel-throughput-2waysmt/intel.throughput.l1.log",
     "L1-dcache-loads", 
     "L1-dcache-load-misses", 
     "L1D",
     intel_xeon_max_throughput_l1d)
-
 
 
 print("Done")
