@@ -19,7 +19,6 @@ intel_xeon_max_throughput_l1i = []
 intel_xeon_max_throughput_llc = []
 intel_xeon_max_throughput_sw = []
 
-
 for i in range(5):
     # branch
     bm = Benchmark(

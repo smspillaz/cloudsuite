@@ -10,8 +10,8 @@ clk_turbo_xeon  = 3.3       # GHz
 ################################################################################
 #                        ThunderX2 CN9975 - Cavium                             #
 ################################################################################
-# TDP_cavium        =           # watts
-# die_cavium        =           # mm2
+TDP_cavium        = 150       # watts
+die_cavium        = 350       # mm2
 cores_cavium      = 28
 clk_base_cavium   = 1.8       # GHz
 clk_turbo_cavium  = 2.4       # GHz

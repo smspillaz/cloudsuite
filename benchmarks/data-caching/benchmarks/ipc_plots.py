@@ -65,8 +65,6 @@ plt.show()
 # IPC in sweet spot
 ################################################################################
 
-xeon_keys = ["65536 keys", "512 conns", "4 threads", ""]
-
 keys = ["16384 keys", "65536 keys", "262114 keys"]
 conns = ["256 conns", "512 conns", "1024 conns"]
 
