@@ -17,6 +17,8 @@ OUTDIR = "plots/"
 if not os.path.exists(OUTDIR):
     os.makedirs(OUTDIR)
     
+matplotlib.rcParams.update({'font.size': 16})
+
 
 ################################################################################
 # Intel IPC over varying RPS
@@ -186,20 +188,20 @@ keys = ["Saturated IPC / (mm2 / core)", "Saturated IPC / (watt / core)"]
 # cavium
 IPC_max_cavium = np.average(arm_ipc_bars)
 bars.append([IPC_max_cavium / (die_cavium / cores_cavium), IPC_max_cavium / (TDP_cavium / cores_cavium)])
-
 # xeon
 IPC_max_xeon = np.average(arm_ipc_bars)
 bars.append([IPC_max_xeon / (die_xeon / cores_xeon), IPC_max_xeon / (TDP_xeon / cores_xeon)])
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.35
 x = np.arange(len(bars))
-plt.bar(x - width/2, bars[0], width, label="Cavium")
-plt.bar(x + width/2, bars[1], width, label="Xeon")
+plt.bar(x - width/2, bars[0], width, label="ARM (Cavium)")
+plt.bar(x + width/2, bars[1], width, label="x86 (Xeon)")
 plt.xticks(range(len(keys)), keys)
-plt.title("IPC per Area and TDP")
+plt.title("IPC per Resource")
 plt.ylabel("IPC")
 plt.legend()
+plt.savefig(OUTDIR + "scaledIPC.pdf")
 plt.show()
 
 
@@ -216,15 +218,16 @@ bars.append([RPS_max_cavium / (die_cavium / cores_cavium), RPS_max_cavium / (TDP
 # xeon
 bars.append([RPS_max_xeon / (die_xeon / cores_xeon), RPS_max_xeon / (TDP_xeon / cores_xeon)])
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.35
 x = np.arange(len(bars))
-plt.bar(x - width/2, bars[0], width, label="Cavium")
-plt.bar(x + width/2, bars[1], width, label="Xeon")
+plt.bar(x - width/2, bars[0], width, label="ARM (Cavium)")
+plt.bar(x + width/2, bars[1], width, label="x86 (Xeon)")
 plt.xticks(range(len(keys)), keys)
-plt.title("RPS per Area and TDP")
+plt.title("RPS per Resource")
 plt.ylabel("RPS")
 plt.legend()
+plt.savefig(OUTDIR + "scaledRPS.pdf")
 plt.show()
 
 
