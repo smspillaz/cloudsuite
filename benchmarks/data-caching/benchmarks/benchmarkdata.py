@@ -3,11 +3,11 @@ import numpy as np
 SERVER_REQ_STR = "Outstanding requests per worker:"
 
 class Benchmark:
-    def __init__(self, key, values):
+    def __init__(self, key, values, endString=None):
         self.key = key
         self.values = values
         self.startString = "Signal handled: Interrupt"
-        self.endString = "seconds time elapsed"
+        self.endString = endString or "seconds time elapsed"
         self.logVals = {}
     
     def addToMap(self, dictToUpdate, keySeq, v):
