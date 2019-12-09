@@ -108,3 +108,14 @@ plt.xlabel("RPS")
 plt.ylabel("Outstanding Requests")
 plt.savefig(OUTDIR + "throughputCaviumNWay.pdf")
 plt.show()
+
+cavium_smt_breakpoints = [0, cavium_smt_breakpoint1, cavium_smt_breakpoint2, cavium_smt_breakpoint3, cavium_smt_breakpoint4]
+cavium_smt_breakpoints_gains = [cavium_smt_breakpoints[i + 1] - cavium_smt_breakpoints[i] for i in range(len(cavium_smt_breakpoints) -1)]
+
+plt.figure(figsize=(9, 6))
+plt.title("Marginal gain with each SMT added, ARM (Cavium)")
+plt.plot(cavium_smt_breakpoints_gains)
+plt.xlabel("SMT")
+plt.ylabel("Marginal gain in average RPS")
+plt.savefig(OUTDIR + "marginalGainRPSCaviumNWay.pdf")
+plt.show()
