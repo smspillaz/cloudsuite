@@ -119,3 +119,5 @@ plt.xlabel("SMT")
 plt.ylabel("Marginal gain in average RPS")
 plt.savefig(OUTDIR + "marginalGainRPSCaviumNWay.pdf")
 plt.show()
+
+print(cavium_smt_breakpoints)
