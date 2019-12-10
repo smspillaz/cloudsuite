@@ -47,14 +47,14 @@ def read_logs(filename, endString, n, searchKeys):
     return keys, np.array(values)
 
 
-def read_arm_throughput_for_ways(ways):
+def read_arm_throughput_for_ways(directory, ways, endString=None):
     arm_cavium_throughput = [
-        Benchmark("==> Bench:", ["instructions:u"], endString="Ran for ")
+        Benchmark("==> Bench:", ["instructions:u"], endString=None)
         for i in range(5)
     ]
     rps1_cavium_keys = ["65536 keys", "512 conns", "8 threads"]
-    rps1_cavium_rps_keys, rps1_cavium_rps_values = read_logs("arm-cavium-test-nway-throughput-prec/arm.cavium.test.{ways}way.throughput.log.{{}}".format(ways=ways),
-                                                             endString=None,
+    rps1_cavium_rps_keys, rps1_cavium_rps_values = read_logs(os.path.join(directory, "arm.cavium.test.{ways}way.throughput.log.{{}}".format(ways=ways)),
+                                                             endString=endString,
                                                              n=5,
                                                              searchKeys=rps1_cavium_keys)
 
@@ -94,20 +94,27 @@ def plot_with_variance(x, y, std, breakpoint, label, linestyle, color, y_top=200
 # ARM throughput 
 ################################################################################
 
-cavium_1way_keys, avg_cavium_1way, std_cavium_1way = read_arm_throughput_for_ways(1)
-cavium_2way_keys, avg_cavium_2way, std_cavium_2way = read_arm_throughput_for_ways(2)
-cavium_3way_keys, avg_cavium_3way, std_cavium_3way = read_arm_throughput_for_ways(3)
-cavium_4way_keys, avg_cavium_4way, std_cavium_4way = read_arm_throughput_for_ways(4)
+cavium_1way_keys, avg_cavium_1way, std_cavium_1way = read_arm_throughput_for_ways("arm-throughput-smt-sensitivity", 1, endString="Ran for ")
+cavium_2way_keys, avg_cavium_2way, std_cavium_2way = read_arm_throughput_for_ways("arm-throughput-smt-sensitivity", 2, endString="Ran for ")
+cavium_3way_keys, avg_cavium_3way, std_cavium_3way = read_arm_throughput_for_ways("arm-throughput-smt-sensitivity", 3, endString="Ran for ")
+cavium_4way_keys, avg_cavium_4way, std_cavium_4way = read_arm_throughput_for_ways("arm-throughput-smt-sensitivity", 4, endString="Ran for ")
 
-cavium_1way_int_keys = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_1way_keys]))
-cavium_2way_int_keys = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_2way_keys]))
-cavium_3way_int_keys = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_3way_keys]))
-cavium_4way_int_keys = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_4way_keys]))
+int_keys = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_1way_keys]))
 
-cavium_smt_breakpoint1 = find_breakpoint(cavium_1way_int_keys, avg_cavium_1way, y_top=200)
-cavium_smt_breakpoint2 = find_breakpoint(cavium_2way_int_keys, avg_cavium_2way, y_top=200)
-cavium_smt_breakpoint3 = find_breakpoint(cavium_3way_int_keys, avg_cavium_3way, y_top=200)
-cavium_smt_breakpoint4 = find_breakpoint(cavium_4way_int_keys, avg_cavium_4way, y_top=200)
+cavium_1way_keys_prec, avg_cavium_1way_prec, std_cavium_1way_prec = read_arm_throughput_for_ways("arm-cavium-test-nway-throughput-prec", 1)
+cavium_2way_keys_prec, avg_cavium_2way_prec, std_cavium_2way_prec = read_arm_throughput_for_ways("arm-cavium-test-nway-throughput-prec", 2)
+cavium_3way_keys_prec, avg_cavium_3way_prec, std_cavium_3way_prec = read_arm_throughput_for_ways("arm-cavium-test-nway-throughput-prec", 3)
+cavium_4way_keys_prec, avg_cavium_4way_prec, std_cavium_4way_prec = read_arm_throughput_for_ways("arm-cavium-test-nway-throughput-prec", 4)
+
+cavium_1way_int_keys_prec = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_1way_keys_prec]))
+cavium_2way_int_keys_prec = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_2way_keys_prec]))
+cavium_3way_int_keys_prec = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_3way_keys_prec]))
+cavium_4way_int_keys_prec = np.array(sorted([int(k.replace(" rps",'')) for k in cavium_4way_keys_prec]))
+
+cavium_smt_breakpoint1 = find_breakpoint(cavium_1way_int_keys_prec, avg_cavium_1way_prec, y_top=200)
+cavium_smt_breakpoint2 = find_breakpoint(cavium_2way_int_keys_prec, avg_cavium_2way_prec, y_top=200)
+cavium_smt_breakpoint3 = find_breakpoint(cavium_3way_int_keys_prec, avg_cavium_3way_prec, y_top=200)
+cavium_smt_breakpoint4 = find_breakpoint(cavium_4way_int_keys_prec, avg_cavium_4way_prec, y_top=200)
 
 plt.figure(figsize=(9, 6))
 plt.title("Average Total Outstanding Client Requests, ARM (Cavium)")
@@ -115,6 +122,7 @@ plot_with_variance(cavium_1way_int_keys, avg_cavium_1way, std_cavium_1way, caviu
 plot_with_variance(cavium_2way_int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint1, linestyle="-", label="2 way", color="C1", n=20)
 plot_with_variance(cavium_3way_int_keys, avg_cavium_3way, std_cavium_3way, cavium_smt_breakpoint1, linestyle="-", label="3 way", color="C2", n=20)
 plot_with_variance(cavium_4way_int_keys, avg_cavium_4way, std_cavium_4way, cavium_smt_breakpoint1, linestyle="-", label="4 way", color="C3", n=25)
+
 plt.legend()
 plt.xlabel("RPS")
 plt.ylabel("Outstanding Requests")
