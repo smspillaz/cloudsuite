@@ -41,6 +41,7 @@ def read_logs(filename, endString, n, searchKeys):
         bench_keys, bench_values = list(zip(*[
             (k, v) for k, v in rps1_cavium.items() if k != "12000 rps"
         ]))
+
         values.append(bench_values)
         keys = bench_keys
 
@@ -74,19 +75,15 @@ def find_breakpoint(x, y, y_top):
     return x[change_index]
 
 
-def plot_with_variance(x, y, std, breakpoint, label, linestyle, color, y_top=200, n=None):
+def plot_with_variance(x, y, std, breakpoint, label, linestyle, color, y_top=200, n=None, plot_type=None):
+    plot_type = plot_type or 'plot'
     x = x[:n]
     y = y[:n]
     std = std[:n]
 
-    first_derivative = np.gradient(np.array([y[i] for i in range(len(y)) if y[max(i - 1, 0)] < y_top]))
-    second_derivative = np.gradient(first_derivative)
-
-    change_index = np.argmax(second_derivative)
-
-    plt.plot(x, y, label=label, linestyle=linestyle, color=color)
+    getattr(plt, plot_type)(x, y, label=label, linestyle=linestyle, color=color)
     plt.fill_between(x, y + std, y - std, alpha=0.2, facecolor=color)
-    plt.axvline(x[change_index], color=color, linestyle="-.")
+    plt.axvline(breakpoint, color=color, linestyle="-.")
     plt.ylim(bottom=0, top=y_top)
 
 
@@ -118,10 +115,10 @@ cavium_smt_breakpoint4 = find_breakpoint(cavium_4way_int_keys_prec, avg_cavium_4
 
 plt.figure(figsize=(9, 6))
 plt.title("Average Total Outstanding Client Requests, ARM (Cavium)")
-plot_with_variance(cavium_1way_int_keys, avg_cavium_1way, std_cavium_1way, cavium_smt_breakpoint1, linestyle="-", label="1 way", color="C0", n=20)
-plot_with_variance(cavium_2way_int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint1, linestyle="-", label="2 way", color="C1", n=20)
-plot_with_variance(cavium_3way_int_keys, avg_cavium_3way, std_cavium_3way, cavium_smt_breakpoint1, linestyle="-", label="3 way", color="C2", n=20)
-plot_with_variance(cavium_4way_int_keys, avg_cavium_4way, std_cavium_4way, cavium_smt_breakpoint1, linestyle="-", label="4 way", color="C3", n=25)
+plot_with_variance(int_keys, avg_cavium_1way, std_cavium_1way, cavium_smt_breakpoint1, linestyle="-", label="1 way", color="C0", n=20, y_top=None, plot_type='semilogy')
+plot_with_variance(int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint2, linestyle="-", label="2 way", color="C1", n=20, y_top=None, plot_type='semilogy')
+plot_with_variance(int_keys, avg_cavium_3way, std_cavium_3way, cavium_smt_breakpoint3, linestyle="-", label="3 way", color="C2", n=20, y_top=None, plot_type='semilogy')
+plot_with_variance(int_keys, avg_cavium_4way, std_cavium_4way, cavium_smt_breakpoint4, linestyle="-", label="4 way", color="C3", n=25, y_top=None, plot_type='semilogy')
 
 plt.legend()
 plt.xlabel("RPS")
@@ -191,10 +188,10 @@ def calculateMissRateAvgStd(d1, d2, cmt):
     return out
 
 
-COLORS = ["blue", "orange"]
+COLORS = ["blue", "orange", "red", "green"]
 
 
-def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, keys, cmt, ways):
+def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, extract_keys, cmt, ways):
     ################################################################################
     # IPC over a range
     ################################################################################
@@ -205,11 +202,11 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, keys, 
 
         cachebm = Benchmark(
             "==> Bench:",
-            ["instructions:u", misskeys[keyset], loadkeys[keyset]])
+            ["instructions:u", misskeys[0], loadkeys[0]])
         cachebm.decodeLog(os.path.join(LOGDIR, log_directory, "arm.cavium.test.{ways}way.throughput.log.{n}".format(n=n + 1, ways=ways)))
 
-        misses1 = extractKVFromMap(extractMapFromMap(cachebm.logVals, keys), misskeys[keyset])
-        loads1 = extractKVFromMap(extractMapFromMap(cachebm.logVals, keys), loadkeys[keyset])
+        misses1 = extractKVFromMap(extractMapFromMap(cachebm.logVals, extract_keys[keyset]), misskeys[0])
+        loads1 = extractKVFromMap(extractMapFromMap(cachebm.logVals, extract_keys[keyset]), loadkeys[0])
         hitrate1 = calculateMissRate(misses1, loads1, cmt)
 
         loads_keys = list(loads1.keys())
@@ -220,7 +217,7 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, keys, 
         np.array([
             iterate_hit_miss_rates(n, keyset=i) for n in range(5)
         ])
-        for i in range(len(loadkeys))
+        for i in range(len(extract_keys))
     ]
     hitrate_means = [
         hitrate_matrix.mean(axis=0)
@@ -234,9 +231,9 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, keys, 
     int_keys = [int(k.replace(" rps",'')) for k in loads_keys]
 
     plt.figure()
-    plt.title(system + " cache hit rate with varying RPS ({} ways)".format(ways))
-    for i in range(len(loadkeys)):
-        plt.plot(int_keys, hitrate_means[i], label=cachetypes[i])
+    plt.title(system + " {} cache hit rate ({} ways)".format(cachetypes[0], ways))
+    for i in range(len(extract_keys)):
+        plt.plot(int_keys, hitrate_means[i], label=extract_keys[i][0])
         plt.fill_between(int_keys, hitrate_means[i] + hitrate_stds[i], hitrate_means[i] - hitrate_stds[i], alpha=0.2, facecolor=COLORS[i])
     plt.xlabel("RPS")
     plt.ylabel("[%]")
@@ -246,43 +243,87 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, keys, 
 
 plotCacheStats(
     "Arm",
-    "arm-cavium-test-nway-throughput-prec",
-    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
-    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
-    ["L1D", "L2D"],
-    ["65536 keys", "512 conns", "8 threads"],
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["L1-dcache-loads:u"], 
+    ["L1-dcache-load-misses:u"], 
+    ["L1D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
     ways=1)
 
 
 plotCacheStats(
     "Arm",
-    "arm-cavium-test-nway-throughput-prec",
-    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
-    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
-    ["L1D", "L2D"],
-    ["65536 keys", "512 conns", "8 threads"],
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["L1-dcache-loads:u"], 
+    ["L1-dcache-load-misses:u"], 
+    ["L1D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
     ways=2)
 
 
 plotCacheStats(
     "Arm",
-    "arm-cavium-test-nway-throughput-prec",
-    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
-    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
-    ["L1D", "L2D"],
-    ["65536 keys", "512 conns", "8 threads"],
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["L1-dcache-loads:u"], 
+    ["L1-dcache-load-misses:u"], 
+    ["L1D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
     ways=3)
 
 
 plotCacheStats(
     "Arm",
-    "arm-cavium-test-nway-throughput-prec",
-    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
-    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
-    ["L1D", "L2D"],
-    ["65536 keys", "512 conns", "8 threads"],
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["L1-dcache-loads:u"], 
+    ["L1-dcache-load-misses:u"], 
+    ["L2D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
+    CMT1,
+    ways=4)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["armv8_pmuv3_0/l2d_cache/:u"], 
+    ["armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L2D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
+    CMT1,
+    ways=1)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["armv8_pmuv3_0/l2d_cache/:u"], 
+    ["armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L2D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
+    CMT1,
+    ways=2)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["armv8_pmuv3_0/l2d_cache/:u"], 
+    ["armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L2D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
+    CMT1,
+    ways=3)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec-small",
+    ["armv8_pmuv3_0/l2d_cache/:u"], 
+    ["armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L2D"],
+    [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
     ways=4)
