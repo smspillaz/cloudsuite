@@ -154,3 +154,135 @@ plt.savefig(OUTDIR + "marginalGainRPSCaviumNWayBar.pdf")
 plt.show()
 
 print(cavium_smt_breakpoints)
+
+# Show cache sensitivity for each 
+
+CMT1 = "d1 = cache misses, d2 = cache accesses"
+CMT2 = "d1 = cach misses, d2 = cache hits"
+
+def calculateMissRate(d1, d2, cmt):
+    out = []
+    if cmt is CMT1:
+        for k, v in d1.items():
+            loads = d2[k]
+            misses = d1[k]
+            out.append((1 - (misses/loads)) * 100)
+    elif cmt is CMT2:
+        for k, v in d1.items():
+            hits = d2[k]
+            misses = d1[k]
+            tot = hits + misses
+            out.append((1 - (misses/tot)) * 100)
+    return out
+
+def calculateMissRateAvgStd(d1, d2, cmt):
+    out = []
+    if cmt is CMT1:
+        for k, v in d1.items():
+            loads = d2[k]
+            misses = d1[k]
+            out.append((1 - (misses/loads)) * 100)
+    elif cmt is CMT2:
+        for k, v in d1.items():
+            hits = d2[k]
+            misses = d1[k]
+            tot = hits + misses
+            out.append((1 - (misses/tot)) * 100)
+    return out
+
+
+COLORS = ["blue", "orange"]
+
+
+def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, keys, cmt, ways):
+    ################################################################################
+    # IPC over a range
+    ################################################################################
+    loads_keys = None
+
+    def iterate_hit_miss_rates(n, keyset):
+        nonlocal loads_keys
+
+        cachebm = Benchmark(
+            "==> Bench:",
+            ["instructions:u", misskeys[keyset], loadkeys[keyset]])
+        cachebm.decodeLog(os.path.join(LOGDIR, log_directory, "arm.cavium.test.{ways}way.throughput.log.{n}".format(n=n + 1, ways=ways)))
+
+        misses1 = extractKVFromMap(extractMapFromMap(cachebm.logVals, keys), misskeys[keyset])
+        loads1 = extractKVFromMap(extractMapFromMap(cachebm.logVals, keys), loadkeys[keyset])
+        hitrate1 = calculateMissRate(misses1, loads1, cmt)
+
+        loads_keys = list(loads1.keys())
+
+        return hitrate1
+
+    hitrate_matrices = [
+        np.array([
+            iterate_hit_miss_rates(n, keyset=i) for n in range(5)
+        ])
+        for i in range(len(loadkeys))
+    ]
+    hitrate_means = [
+        hitrate_matrix.mean(axis=0)
+        for hitrate_matrix in hitrate_matrices
+    ]
+    hitrate_stds = [
+        hitrate_matrix.std(axis=0)
+        for hitrate_matrix in hitrate_matrices
+    ]
+
+    int_keys = [int(k.replace(" rps",'')) for k in loads_keys]
+
+    plt.figure()
+    plt.title(system + " cache hit rate with varying RPS ({} ways)".format(ways))
+    for i in range(len(loadkeys)):
+        plt.plot(int_keys, hitrate_means[i], label=cachetypes[i])
+        plt.fill_between(int_keys, hitrate_means[i] + hitrate_stds[i], hitrate_means[i] - hitrate_stds[i], alpha=0.2, facecolor=COLORS[i])
+    plt.xlabel("RPS")
+    plt.ylabel("[%]")
+    plt.legend()
+    plt.show()
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec",
+    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
+    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L1D", "L2D"],
+    ["65536 keys", "512 conns", "8 threads"],
+    CMT1,
+    ways=1)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec",
+    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
+    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L1D", "L2D"],
+    ["65536 keys", "512 conns", "8 threads"],
+    CMT1,
+    ways=2)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec",
+    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
+    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L1D", "L2D"],
+    ["65536 keys", "512 conns", "8 threads"],
+    CMT1,
+    ways=3)
+
+
+plotCacheStats(
+    "Arm",
+    "arm-cavium-test-nway-throughput-prec",
+    ["L1-dcache-loads:u", "armv8_pmuv3_0/l2d_cache/:u"], 
+    ["L1-dcache-load-misses:u", "armv8_pmuv3_0/l2d_cache_refill/:u"], 
+    ["L1D", "L2D"],
+    ["65536 keys", "512 conns", "8 threads"],
+    CMT1,
+    ways=4)
