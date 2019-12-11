@@ -17,6 +17,15 @@ OUTDIR = "plots/"
 if not os.path.exists(OUTDIR):
     os.makedirs(OUTDIR)
 
+def autolabel(rects, ax, suffix):
+    """
+    Attach a text label above each bar displaying its height
+    """
+    for rect in rects:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,
+                '%d' % int(height) + suffix,
+                ha='center', va='bottom')
 
 def read_logs(filename, endString, n, searchKeys):
     arm_cavium_throughput = [
@@ -102,10 +111,10 @@ cavium_smt_breakpoint4 = find_breakpoint(cavium_4way_int_keys, avg_cavium_4way, 
 
 plt.figure(figsize=(9, 6))
 plt.title("Average Total Outstanding Client Requests, ARM (Cavium)")
-plot_with_variance(cavium_1way_int_keys, avg_cavium_1way, std_cavium_1way, cavium_smt_breakpoint1, linestyle="--", label="1 way", color="red", n=20)
-plot_with_variance(cavium_2way_int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint1, linestyle="--", label="2 way", color="green", n=20)
-plot_with_variance(cavium_3way_int_keys, avg_cavium_3way, std_cavium_3way, cavium_smt_breakpoint1, linestyle="--", label="3 way", color="blue", n=20)
-plot_with_variance(cavium_4way_int_keys, avg_cavium_4way, std_cavium_4way, cavium_smt_breakpoint1, linestyle="--", label="4 way", color="black", n=25)
+plot_with_variance(cavium_1way_int_keys, avg_cavium_1way, std_cavium_1way, cavium_smt_breakpoint1, linestyle="-", label="1 way", color="C0", n=20)
+plot_with_variance(cavium_2way_int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint1, linestyle="-", label="2 way", color="C1", n=20)
+plot_with_variance(cavium_3way_int_keys, avg_cavium_3way, std_cavium_3way, cavium_smt_breakpoint1, linestyle="-", label="3 way", color="C2", n=20)
+plot_with_variance(cavium_4way_int_keys, avg_cavium_4way, std_cavium_4way, cavium_smt_breakpoint1, linestyle="-", label="4 way", color="C3", n=25)
 plt.legend()
 plt.xlabel("RPS")
 plt.ylabel("Outstanding Requests")
@@ -121,6 +130,19 @@ plt.plot([1, 2, 3, 4], cavium_smt_breakpoints_gains)
 plt.xlabel("SMT")
 plt.ylabel("Marginal gain in average RPS")
 plt.savefig(OUTDIR + "marginalGainRPSCaviumNWay.pdf")
+plt.show()
+
+cavium_smt_breakpoints_gains_percent = [((sum(cavium_smt_breakpoints_gains[0:i+1]) / cavium_smt_breakpoints_gains[0])) * 100 for i, _ in enumerate(cavium_smt_breakpoints_gains)]
+SMT_labels = ["1 way", "2 way","3 way","4 way"]
+plt.figure(figsize=(9, 6))
+plt.title("Relative gain per SMT level, ARM (Cavium)")
+bars = plt.bar(np.arange(len(SMT_labels)), cavium_smt_breakpoints_gains_percent, 1, label=SMT_labels,color=["C0", "C1", "C2", "C3"], edgecolor='black')
+autolabel(bars, plt, '%')
+plt.xlabel("SMT")
+plt.ylabel("RPS gain [%]")
+plt.xticks(range(len(SMT_labels)), SMT_labels, rotation = 20)
+plt.ylim(0,max(cavium_smt_breakpoints_gains_percent)*1.15)
+plt.savefig(OUTDIR + "marginalGainRPSCaviumNWayBar.pdf")
 plt.show()
 
 print(cavium_smt_breakpoints)
