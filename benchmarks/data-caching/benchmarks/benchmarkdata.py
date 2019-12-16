@@ -26,17 +26,20 @@ class Benchmark:
             segmentCount = 0
             segmentKeys = []
             serverReqs = []
-            for line in f.readlines():
+            for i, line in enumerate(f.readlines()):
                 if self.endString in line:
                     # Compute avg. outstanding requests
-                    self.addToMap(self.logVals, segmentKeys +
-                        ["Server queue"], sum(serverReqs) / len(serverReqs))
+                    try:
+                        self.addToMap(self.logVals, segmentKeys +
+                            ["Server queue"], sum(serverReqs) / len(serverReqs))
+                    except Exception as e:
+                        print(filename, i)
+                        raise e
 
                     inSegment = False
                     segmentKeys = []
                     serverReqs = []
                     segmentCount += 1
-
                 
                 if inSegment:
                     # Parse server outstanding requests
