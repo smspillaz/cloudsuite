@@ -191,7 +191,7 @@ def calculateMissRateAvgStd(d1, d2, cmt):
 COLORS = ["blue", "orange", "red", "green"]
 
 
-def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, extract_keys, cmt, ways):
+def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, extract_keys, cmt, ways, save=None):
     ################################################################################
     # IPC over a range
     ################################################################################
@@ -238,7 +238,12 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, extrac
     plt.xlabel("RPS")
     plt.ylabel("[%]")
     plt.legend()
+
+    if save:
+        plt.savefig(save)
+
     plt.show()
+
 
 
 plotCacheStats(
@@ -249,7 +254,8 @@ plotCacheStats(
     ["L1D"],
     [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
-    ways=1)
+    ways=1,
+    save=OUTDIR + "L1DcacheKeyScalingAtSaturation1Way.pdf")
 
 
 plotCacheStats(
@@ -293,7 +299,8 @@ plotCacheStats(
     ["L2D"],
     [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
-    ways=1)
+    ways=1,
+    save=OUTDIR + "L2DcacheKeyScalingAtSaturation1Way.pdf")
 
 
 plotCacheStats(
