@@ -183,19 +183,19 @@ plt.show()
 ################################################################################
 
 bars = []
-keys = ["Saturated IPC / (mm2 / core)", "Saturated IPC / (watt / core)"]
+keys = ["Saturated IPC / (mm2)", "Saturated IPC / (watt)"]
 
 # cavium
 IPC_max_cavium = np.average(arm_ipc_bars)
-bars.append([IPC_max_cavium / (die_cavium / cores_cavium), IPC_max_cavium / (TDP_cavium / cores_cavium)])
+bars.append([(cores_cavium*freq_scaling_cavium*IPC_max_cavium) / (die_cavium), (cores_cavium*freq_scaling_cavium*IPC_max_cavium) / (TDP_cavium)])
 # xeon
 IPC_max_xeon = np.average(arm_ipc_bars)
-bars.append([IPC_max_xeon / (die_xeon / cores_xeon), IPC_max_xeon / (TDP_xeon / cores_xeon)])
+bars.append([(IPC_max_xeon*cores_xeon*freq_scaling_xeon) / (die_xeon), (IPC_max_xeon*cores_xeon*freq_scaling_xeon) / (TDP_xeon)])
 
 plt.figure(figsize=(9, 6))
 width = 0.35
 x = np.arange(len(bars))
-plt.bar(x - width/2, bars[0], width, label="ARM (Cavium)")
+plt.bar(x - width/2, bars[0], width, label="ARM (ThunderX2)")
 plt.bar(x + width/2, bars[1], width, label="x86 (Xeon)")
 plt.xticks(range(len(keys)), keys)
 plt.title("IPC per Resource")
@@ -210,18 +210,18 @@ plt.show()
 ################################################################################
 
 bars = []
-keys = ["Saturated RPS / (mm2 / core)", "Saturated RPS / (watt / core)"]
+keys = ["Saturated RPS / (mm2)", "Saturated RPS / (watt)"]
 
 # cavium
-bars.append([RPS_max_cavium / (die_cavium / cores_cavium), RPS_max_cavium / (TDP_cavium / cores_cavium)])
+bars.append([(cores_cavium*freq_scaling_cavium*RPS_max_cavium) / (die_cavium), (cores_cavium*freq_scaling_cavium*RPS_max_cavium) / (TDP_cavium)])
 
 # xeon
-bars.append([RPS_max_xeon / (die_xeon / cores_xeon), RPS_max_xeon / (TDP_xeon / cores_xeon)])
+bars.append([(RPS_max_xeon*cores_xeon*freq_scaling_xeon) / (die_xeon), (RPS_max_xeon*cores_xeon*freq_scaling_xeon) / (TDP_xeon)])
 
 plt.figure(figsize=(9, 6))
 width = 0.35
 x = np.arange(len(bars))
-plt.bar(x - width/2, bars[0], width, label="ARM (Cavium)")
+plt.bar(x - width/2, bars[0], width, label="ARM (ThunderX2)")
 plt.bar(x + width/2, bars[1], width, label="x86 (Xeon)")
 plt.xticks(range(len(keys)), keys)
 plt.title("RPS per Resource")
