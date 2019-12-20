@@ -113,7 +113,7 @@ cavium_smt_breakpoint2 = find_breakpoint(cavium_2way_int_keys_prec, avg_cavium_2
 cavium_smt_breakpoint3 = find_breakpoint(cavium_3way_int_keys_prec, avg_cavium_3way_prec, y_top=200)
 cavium_smt_breakpoint4 = find_breakpoint(cavium_4way_int_keys_prec, avg_cavium_4way_prec, y_top=200)
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(7, 6))
 plt.title("Average Total Outstanding Client Requests, ARM (Cavium)")
 plot_with_variance(int_keys, avg_cavium_1way, std_cavium_1way, cavium_smt_breakpoint1, linestyle="-", label="1 way", color="C0", n=20, y_top=None, plot_type='semilogy')
 plot_with_variance(int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint2, linestyle="-", label="2 way", color="C1", n=20, y_top=None, plot_type='semilogy')
@@ -129,7 +129,7 @@ plt.show()
 cavium_smt_breakpoints = [0, cavium_smt_breakpoint1, cavium_smt_breakpoint2, cavium_smt_breakpoint3, cavium_smt_breakpoint4]
 cavium_smt_breakpoints_gains = [cavium_smt_breakpoints[i + 1] - cavium_smt_breakpoints[i] for i in range(len(cavium_smt_breakpoints) -1)]
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(7, 6))
 plt.title("Marginal gain with each SMT added, ARM (Cavium)")
 plt.plot([1, 2, 3, 4], cavium_smt_breakpoints_gains)
 plt.xlabel("SMT")
@@ -139,7 +139,7 @@ plt.show()
 
 cavium_smt_breakpoints_gains_percent = [((sum(cavium_smt_breakpoints_gains[0:i+1]) / cavium_smt_breakpoints_gains[0])) * 100 for i, _ in enumerate(cavium_smt_breakpoints_gains)]
 SMT_labels = ["1 way", "2 way","3 way","4 way"]
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(7, 6))
 plt.title("Relative gain per SMT level, ARM (Cavium)")
 bars = plt.bar(np.arange(len(SMT_labels)), cavium_smt_breakpoints_gains_percent, 1, label=SMT_labels,color=["C0", "C1", "C2", "C3"], edgecolor='black')
 autolabel(bars, plt, '%')
@@ -230,8 +230,8 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, extrac
 
     int_keys = [int(k.replace(" rps",'')) for k in loads_keys]
 
-    plt.figure()
-    plt.title(system + " {} cache hit rate ({} ways)".format(cachetypes[0], ways))
+    plt.figure(figsize=(7, 6))
+    plt.title(system + " {} cache {} rate ({} ways)".format(cachetypes[0], "refill" if cachetypes[0] == "L2D" else "hit", ways))
     for i in range(len(extract_keys)):
         plt.plot(int_keys, hitrate_means[i], label=extract_keys[i][0])
         plt.fill_between(int_keys, hitrate_means[i] + hitrate_stds[i], hitrate_means[i] - hitrate_stds[i], alpha=0.2, facecolor=COLORS[i])
@@ -285,10 +285,11 @@ plotCacheStats(
     "arm-cavium-test-nway-throughput-prec-small",
     ["L1-dcache-loads:u"], 
     ["L1-dcache-load-misses:u"], 
-    ["L2D"],
+    ["L1D"],
     [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
-    ways=4)
+    ways=4,
+    save=OUTDIR + "L1DcacheKeyScalingAtSaturation4Way.pdf")
 
 
 plotCacheStats(
@@ -333,4 +334,5 @@ plotCacheStats(
     ["L2D"],
     [["32 keys", "1 conns", "8 threads"], ["256 keys", "1 conns", "8 threads"], ["512 keys", "1 conns", "8 threads"], ["1024 keys", "1 conns", "8 threads"]],
     CMT1,
-    ways=4)
+    ways=4,
+    save=OUTDIR + "L2DcacheKeyScalingAtSaturation4Way.pdf")
