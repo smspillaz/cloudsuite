@@ -54,7 +54,7 @@ def calculateMissRateAvgStd(d1, d2, cmt):
 
 
 
-def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm, keys, maxtpthreads, maxtprps, cmt):
+def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm, keys, maxtpthreads, maxtprps, cmt, save=None):
     ################################################################################
     # IPC over a range
     ################################################################################
@@ -80,6 +80,10 @@ def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm, keys, 
     plt.legend()
     plt.xlabel("RPS")
     plt.ylabel("[%]")
+
+    if save:
+        plt.savefig(os.path.join(OUTDIR, "cache_rps_range_{}".format(save)))
+
     plt.show()
 
     ################################################################################
@@ -119,6 +123,11 @@ def plotCacheStats(system, logfile, loadkey, misskey, cachetype, maxtpbm, keys, 
     plt.title(system + " " + cachetype + " Hit Rate with varying keys, connections @ max throughput")
     plt.ylabel("[%]")
     plt.legend()
+    plt.tight_layout()
+
+    if save:
+        plt.savefig(os.path.join(OUTDIR, "cache_sweet_spot_{}.pdf".format(save)))
+
     plt.show()
 
 xeon_keys = [["65536 keys", "512 conns", "4 threads"], ["65536 keys", "512 conns", "8 threads"]]
