@@ -54,7 +54,7 @@ for k, v in userinstr2_xeon.items():
     cycles = usercycles2_xeon[k] + kerncycles2_xeon[k]
     ipc2_xeon.append(instr/cycles)
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 plt.title("IPC with varying RPS")
 plt.plot([int(k.replace(" rps",'')) for k in userinstr1_xeon.keys()], ipc1_xeon, label='1')
 plt.plot([int(k.replace(" rps",'')) for k in userinstr2_xeon.keys()], ipc2_xeon, label='2')
@@ -85,7 +85,7 @@ for c in conns:
         bar.append(ipc_u)
     xeon_ipc_bars.append(bar)
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.25
 x = np.arange(len(xeon_ipc_bars))
 plt.bar(x - width, xeon_ipc_bars[0], width, label=keys[0])
@@ -137,7 +137,7 @@ for k, v in userinstr2_arm.items():
     cycles = usercycles2_arm[k]
     ipc2_arm.append(instr/cycles)
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 plt.title("IPC with varying RPS")
 plt.plot([int(k.replace(" rps",'')) for k in userinstr1_arm.keys()], ipc1_arm, label='1')
 plt.plot([int(k.replace(" rps",'')) for k in userinstr2_arm.keys()], ipc2_arm, label='2')
@@ -165,7 +165,7 @@ for c in conns:
         bar.append(ipc_u)
     arm_ipc_bars.append(bar)
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.25
 x = np.arange(len(arm_ipc_bars))
 plt.bar(x - width, arm_ipc_bars[0], width, label=keys[0])
