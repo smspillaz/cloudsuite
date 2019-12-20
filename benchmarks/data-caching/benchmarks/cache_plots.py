@@ -20,6 +20,8 @@ if not os.path.exists(OUTDIR):
 CMT1 = "d1 = cache misses, d2 = cache accesses"
 CMT2 = "d1 = cach misses, d2 = cache hits"
 
+matplotlib.rcParams.update({'font.size': 16})
+
 def calculateMissRate(d1, d2, cmt):
     out = []
     if cmt is CMT1:

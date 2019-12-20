@@ -92,7 +92,7 @@ mean_mega_instructions_per_second_ways = instructions_ways.mean(axis=1) / (10 **
 print(mean_mega_instructions_per_second_ways)
 print(mean_mega_instructions_per_second_ways.max() + 1)
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.25
 x = np.arange(len(mean_mega_instructions_per_second_ways))
 bars = plt.bar(x, mean_mega_instructions_per_second_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
@@ -110,7 +110,7 @@ plt.savefig("plots/caviumInstructionsPerSecond.pdf")
 plt.show()
 
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.25
 x = np.arange(len(mean_ipc_per_ways))
 bars = plt.bar(x, mean_ipc_per_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
@@ -130,7 +130,7 @@ plt.show()
 mean_ipc_1way_per_ways = hmean(instructions_div_cycles_1smt, axis=1)
 
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.25
 x = np.arange(len(mean_ipc_1way_per_ways))
 bars = plt.bar(x, mean_ipc_1way_per_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
@@ -148,7 +148,7 @@ plt.show()
 
 mean_ipc_4way_per_ways = hmean(instructions_div_cycles_4smt, axis=1)
 
-plt.figure()
+plt.figure(figsize=(9, 6))
 width = 0.25
 x = np.arange(len(mean_ipc_4way_per_ways))
 bars = plt.bar(x, mean_ipc_4way_per_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
