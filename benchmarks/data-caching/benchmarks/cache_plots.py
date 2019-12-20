@@ -144,7 +144,8 @@ plotCacheStats(
     xeon_keys,
     "4 threads",
     "115000 rps",
-    CMT1)
+    CMT1,
+    "xeon_llc_hit_rate")
 
 """
 plotCacheStats(
