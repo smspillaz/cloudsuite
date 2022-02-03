@@ -7,6 +7,8 @@ from systemconstants import *
 from benchmarkdata import *
 from decodedlogs import *
 
+matplotlib.rcParams.update({'font.size': 16})
+
 
 def get_average_value_for_key_in_logs(benchmarks, keys, conns, threads, rps, metric):
     print(benchmarks[1].logVals.keys())
