@@ -145,7 +145,7 @@ bars = plt.bar(np.arange(len(SMT_labels)), cavium_smt_breakpoints_gains_percent,
 autolabel(bars, plt, '%')
 plt.xlabel("SMT")
 plt.ylabel("RPS gain [%]")
-plt.xticks(range(len(SMT_labels)), SMT_labels, rotation = 20)
+plt.xticks(range(len(SMT_labels)), SMT_labels)
 plt.ylim(0,max(cavium_smt_breakpoints_gains_percent)*1.15)
 plt.savefig(OUTDIR + "marginalGainRPSCaviumNWayBar.pdf")
 plt.show()
