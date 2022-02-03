@@ -113,7 +113,7 @@ cavium_smt_breakpoint2 = find_breakpoint(cavium_2way_int_keys_prec, avg_cavium_2
 cavium_smt_breakpoint3 = find_breakpoint(cavium_3way_int_keys_prec, avg_cavium_3way_prec, y_top=200)
 cavium_smt_breakpoint4 = find_breakpoint(cavium_4way_int_keys_prec, avg_cavium_4way_prec, y_top=200)
 
-plt.figure(figsize=(7, 6))
+plt.figure(figsize=(9, 6))
 plt.title("Average Total Outstanding Client Requests, ARM (Cavium)")
 plot_with_variance(int_keys, avg_cavium_1way, std_cavium_1way, cavium_smt_breakpoint1, linestyle="-", label="1 way", color="C0", n=20, y_top=None, plot_type='semilogy')
 plot_with_variance(int_keys, avg_cavium_2way, std_cavium_2way, cavium_smt_breakpoint2, linestyle="-", label="2 way", color="C1", n=20, y_top=None, plot_type='semilogy')
@@ -139,8 +139,8 @@ plt.show()
 
 cavium_smt_breakpoints_gains_percent = [((sum(cavium_smt_breakpoints_gains[0:i+1]) / cavium_smt_breakpoints_gains[0])) * 100 for i, _ in enumerate(cavium_smt_breakpoints_gains)]
 SMT_labels = ["1 way", "2 way","3 way","4 way"]
-plt.figure(figsize=(7, 6))
-plt.title("Relative gain per SMT level, ARM (Cavium)")
+plt.figure(figsize=(9, 6))
+plt.title("Relative gain per SMT level, ARM (ThunderX2)")
 bars = plt.bar(np.arange(len(SMT_labels)), cavium_smt_breakpoints_gains_percent, 1, label=SMT_labels,color=["C0", "C1", "C2", "C3"], edgecolor='black')
 autolabel(bars, plt, '%')
 plt.xlabel("SMT")
@@ -230,7 +230,7 @@ def plotCacheStats(system, log_directory, loadkeys, misskeys, cachetypes, extrac
 
     int_keys = [int(k.replace(" rps",'')) for k in loads_keys]
 
-    plt.figure(figsize=(7, 6))
+    plt.figure(figsize=(9, 6))
     plt.title(system + " {} cache {} rate ({} ways)".format(cachetypes[0], "refill" if cachetypes[0] == "L2D" else "hit", ways))
     for i in range(len(extract_keys)):
         plt.plot(int_keys, hitrate_means[i], label=extract_keys[i][0])
