@@ -98,8 +98,8 @@ x = np.arange(len(mean_mega_instructions_per_second_ways))
 bars = plt.bar(x, mean_mega_instructions_per_second_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
 plt.xticks(range(len(SMT_labels)), SMT_labels, rotation = 20)
 autolabel(bars, plt, '')
-plt.title("Cavium Mega-Instructions per Second, per SMT level")
-plt.ylabel("mIPS (User mode)")
+plt.title("ThunderX2 Mega-Instructions per Second, per SMT level")
+plt.ylabel("mIPS")
 plt.ylim(0,mean_mega_instructions_per_second_ways.max() + mean_mega_instructions_per_second_ways.max() * 0.20)
 
 #for i, v in enumerate(mean_instructions_ways):
@@ -115,8 +115,8 @@ width = 0.25
 x = np.arange(len(mean_ipc_per_ways))
 bars = plt.bar(x, mean_ipc_per_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
 plt.xticks(range(len(SMT_labels)), SMT_labels, rotation = 20)
-plt.title("Cavium IPC, per SMT level")
-plt.ylabel("IPC (User mode)")
+plt.title("ThunderX2 IPC, per SMT level")
+plt.ylabel("IPC")
 plt.ylim(0,0.8)
 
 for i, v in enumerate(mean_ipc_per_ways):
@@ -135,7 +135,7 @@ width = 0.25
 x = np.arange(len(mean_ipc_1way_per_ways))
 bars = plt.bar(x, mean_ipc_1way_per_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
 plt.xticks(range(len(SMT_labels)), SMT_labels, rotation = 20)
-plt.title("Cavium Instr. per 1way cycles, per SMT level")
+plt.title("ThunderX2 Instr. per 1way cycles, per SMT level")
 plt.ylabel("IPC (User mode)")
 plt.ylim(0,max(mean_ipc_1way_per_ways) + 0.2)
 
@@ -153,7 +153,7 @@ width = 0.25
 x = np.arange(len(mean_ipc_4way_per_ways))
 bars = plt.bar(x, mean_ipc_4way_per_ways, 1, color=["C0", "C1", "C2", "C3"], edgecolor='black')
 plt.xticks(range(len(SMT_labels)), SMT_labels, rotation = 20)
-plt.title("Cavium Instr. per 4way cycles, per SMT level")
+plt.title("ThunderX2 Instr. per 4way cycles, per SMT level")
 plt.ylabel("IPC (User mode)")
 plt.ylim(0,max(mean_ipc_4way_per_ways) + 0.2)
 
