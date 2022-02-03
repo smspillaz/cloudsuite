@@ -107,7 +107,6 @@ plt.ylim(0,mean_mega_instructions_per_second_ways.max() + mean_mega_instructions
 #for i, v in enumerate(mean_instructions_ways):
 #    plt.text(i - 0.13, v + 0.01, "{:.2f}".format(v))
 
-plt.legend()
 plt.savefig("plots/caviumInstructionsPerSecond.pdf")
 plt.show()
 
@@ -124,7 +123,6 @@ plt.ylim(0,0.8)
 for i, v in enumerate(mean_ipc_per_ways):
     plt.text(i - 0.13, v + 0.01, "{:.2f}".format(v))
 
-plt.legend()
 plt.savefig("plots/caviumIPCPerSMT.pdf")
 plt.show()
 
@@ -144,7 +142,6 @@ plt.ylim(0,max(mean_ipc_1way_per_ways) + 0.2)
 for i, v in enumerate(mean_ipc_1way_per_ways):
     plt.text(i - 0.13, v + 0.01, "{:.2f}".format(v))
 
-plt.legend()
 plt.savefig("plots/caviumIPC1wayPerSMT.pdf")
 plt.show()
 
@@ -162,7 +159,6 @@ plt.ylim(0,max(mean_ipc_4way_per_ways) + 0.2)
 for i, v in enumerate(mean_ipc_4way_per_ways):
     plt.text(i - 0.13, v + 0.01, "{:.2f}".format(v))
 
-plt.legend()
 plt.savefig("plots/caviumIPC1wayPerSMT.pdf")
 plt.show()
 
